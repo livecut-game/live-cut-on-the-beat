@@ -8,3 +8,5 @@ Rhythm game buat kru konser. Pilih kursi (Switcher atau Lighting Busker), pilih 
 **Kontrol**
 - Switcher: `1–4` pilih preview, `Spasi` TAKE.
 - Lighting: `1–5` WASH / BEAMS / STROBE / SPOT / BLACKOUT.
+
+**Bahasa / Language:** tombol `ID | EN` di menu. Otomatis English kalau browser bukan Bahasa Indonesia.
