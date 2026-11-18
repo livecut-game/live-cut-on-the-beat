@@ -184,6 +184,42 @@ body:not(.mode-light) #pads,body:not(.mode-light) .k-light{display:none}
 .nb{height:7px;background:#22222a;border-radius:4px;overflow:hidden}.nb i{display:block;height:100%}
 .nr b{text-align:right}
 @media (max-width:640px){.nr{grid-template-columns:120px 1fr 30px}}
+.quit{font-family:inherit;font-size:11px;font-weight:800;letter-spacing:.12em;background:transparent;border:1px solid #3a3a44;color:var(--mut);border-radius:6px;padding:8px 12px;cursor:pointer;display:none}
+.live .quit{display:block}.quit:hover{border-color:var(--red);color:var(--txt)}
+#quitModal{position:fixed;inset:0;z-index:30;background:rgba(4,4,6,.8);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px}
+#quitModal.hide{display:none}.qcard{max-width:520px}
+.rcol{display:flex;flex-direction:column;gap:8px}
+.ytslot{aspect-ratio:16/9;background:#000;border:1px solid var(--line);border-radius:4px;display:none}
+body.mode-yt #ytSlot{display:block}
+#ytcard .ytslot{display:block;margin:6px 0 10px}
+#ytHost{position:fixed;left:-9999px;top:0;width:320px;height:180px;z-index:4}
+#ytHost iframe{width:100%;height:100%;display:block;border:0}
+.ytsec{margin-top:10px}.beta{font-size:8px;color:var(--amb);border:1px solid var(--amb);border-radius:3px;padding:1px 4px;margin-left:4px;letter-spacing:.1em}
+.ytadd{display:flex;gap:6px;margin:8px 0 4px}
+.ytadd input,#mTitle{flex:1;font-family:inherit;font-size:12px;background:#0b0b0f;border:1px solid #3a3a44;border-radius:6px;color:var(--txt);padding:9px 10px;min-width:0}
+.ytitem{display:flex;gap:6px;align-items:stretch;margin-top:6px}
+.ytpick{flex:1;font-family:inherit;text-align:left;background:#141419;border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--txt);cursor:pointer;display:flex;flex-direction:column;gap:2px;min-width:0}
+.ytpick .g{font-size:9px;letter-spacing:.14em;color:var(--acc)}.ytpick b{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ytitem.sel .ytpick{border-color:var(--red);background:#1c0f12}
+.ytact{font-family:inherit;font-size:10px;font-weight:800;letter-spacing:.08em;background:#1d1d24;border:1px solid var(--line);border-radius:6px;color:var(--txt);padding:0 10px;cursor:pointer}
+.ytact.del{color:var(--red)}
+#ytcard{max-width:760px}
+.ytbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.mtime{font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}
+.mdot{width:14px;height:14px;border-radius:50%;background:#22222a}.mdot.on{background:#fff;box-shadow:0 0 10px #fff}.mdot.on.one{background:var(--red);box-shadow:0 0 12px var(--red)}
+.ytstep{background:#141419;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.ytstep>b{font-size:10px;letter-spacing:.18em;color:var(--mut);display:block;margin-bottom:6px}
+.ytstep .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.ytstep kbd{display:inline-block;padding:0 5px;border:1px solid #3a3a44;border-bottom-width:2px;border-radius:3px;color:var(--txt);font-family:inherit;font-size:10px}
+.seg{display:flex;border:1px solid #3a3a44;border-radius:6px;overflow:hidden}
+.seg button{font-family:inherit;font-size:11px;font-weight:800;background:transparent;border:0;color:var(--mut);padding:8px 10px;cursor:pointer}.seg button.on{background:var(--red);color:#fff}
+.bpm{font-size:13px;min-width:120px}.bpm b{font-size:18px;color:var(--acc)}
+.chk{font-size:11px;color:var(--mut);display:flex;gap:4px;align-items:center}
+#mMarks{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.mk{font-size:11px;background:#0b0b0f;border:1px solid var(--line);border-radius:5px;padding:4px 6px}
+.mk button{background:none;border:0;color:var(--mut);cursor:pointer;font-family:inherit}
+.k-calm{color:#7a9aff}.k-build{color:#ff7ad9}.k-big{color:#ffd23c}.k-drop{color:#3cffb4}.k-m{color:var(--acc)}.k-e{color:var(--red)}
+#mTap.press{transform:translateY(2px)}
 </style>
 </head>
 <body>
@@ -194,12 +230,13 @@ body:not(.mode-light) #pads,body:not(.mode-light) .k-light{display:none}
   <div class="stat"><small data-en="SCORE">SKOR</small><span id="score">0</span></div>
   <div class="stat"><small>COMBO</small><span id="combo">x0</span></div>
   <div class="hype"><small data-en="CROWD HYPE">HYPE PENONTON</small><div class="bar"><i id="hypeBar"></i></div></div>
+  <button class="quit" id="quitBtn" title="Esc" data-en="✕ END">✕ AKHIRI</button>
  </header>
  <main>
   <div class="stage">
    <div class="top">
     <div class="mon pgm" id="mPgm"><canvas id="cPgm"></canvas><div class="lbl red"><span id="pgmPre">PROGRAM</span> · <span id="pgmName"></span></div><div id="flash"></div><div id="judge"></div><div id="count"></div></div>
-    <div class="mon pvw" id="mPvw"><canvas id="cPvw"></canvas><div class="lbl grn"><span id="pvwPre">PREVIEW</span> · <span id="pvwName"></span></div><div class="mv">MOVING</div></div>
+    <div class="rcol"><div class="mon pvw" id="mPvw"><canvas id="cPvw"></canvas><div class="lbl grn"><span id="pvwPre">PREVIEW</span> · <span id="pvwName"></span></div><div class="mv">MOVING</div></div><div id="ytSlot" class="ytslot"></div></div>
    </div>
    <div id="ticker"><span class="tag">🎧 DIRECTOR</span><span id="icText">Standby.</span></div>
    <div class="cams" id="cams"></div>
@@ -218,6 +255,13 @@ body:not(.mode-light) #pads,body:not(.mode-light) .k-light{display:none}
  </footer>
 </div>
 
+<div id="ytHost"><div id="ytPlayer"></div></div>
+<div id="quitModal" class="hide"><div class="card qcard">
+ <h1 style="font-size:24px" data-en="End the broadcast?">Yakin mau mengakhiri siaran?</h1>
+ <p class="sub" data-en="The show is paused. If you end now, this run's progress and score won't be saved.">Siaran lagi di-pause. Kalau diakhiri sekarang, progres dan skor siaran ini nggak disimpan.</p>
+ <div class="calbtns"><button class="btn" id="qResume" data-en="▶ KEEP GOING">▶ LANJUT SIARAN</button><button class="btn ghost" id="qEnd" data-en="■ END & BACK TO MENU">■ AKHIRI & KE MENU</button></div>
+ <p class="note" data-en="Esc = keep going">Esc = lanjut siaran</p>
+</div></div>
 <div id="overlay">
  <div class="card" id="menu">
   <div class="lang"><button data-lang="id">ID</button><button data-lang="en">EN</button></div>
@@ -227,7 +271,13 @@ body:not(.mode-light) #pads,body:not(.mode-light) .k-light{display:none}
   <div class="roles" id="roles"></div>
   <h3 class="step" data-en="2 · PICK A SONG">2 · PILIH LAGU</h3>
   <button class="song-toggle" id="songToggle"><span id="songSel"></span><span class="chev" id="songChev">GANTI LAGU ▾</span></button>
-  <div id="songWrap" class="collapsed"><div class="songs" id="songs"></div></div>
+  <div id="songWrap" class="collapsed"><div class="songs" id="songs"></div>
+   <div class="ytsec"><div class="gh">YOUTUBE <span class="beta">BETA</span></div>
+    <div class="ytadd"><input id="ytUrl" placeholder="Tempel link YouTube atau kode beatmap (LCOB1:…)" data-ph-en="Paste a YouTube link or beatmap code (LCOB1:…)"><button class="btn sm" id="ytNew" data-en="+ MAP SONG">+ MAP LAGU</button></div>
+    <div class="note" id="ytMsg"></div>
+    <div id="ytList"></div>
+   </div>
+  </div>
   <ul data-howto="switch">
    <li data-en="<b>Keys 1–4</b> (or click a monitor) put a camera in PREVIEW, then <b>Space</b> TAKEs it to PROGRAM."><b>Tombol 1–4</b> (atau klik monitor) untuk pilih kamera ke PREVIEW, lalu <b>Spasi</b> untuk TAKE ke PROGRAM.</li>
    <li data-en="<b>Cut on the beat:</b> PERFECT (±70ms) or GOOD (±140ms) builds your combo. Miss and it breaks."><b>Cut on-beat:</b> PERFECT (±70ms) atau GOOD (±140ms) bikin combo naik. Meleset, combo pecah.</li>
@@ -250,6 +300,23 @@ body:not(.mode-light) #pads,body:not(.mode-light) .k-light{display:none}
   <div class="calbtns"><button class="btn" id="calStart" data-en="▶ START">▶ MULAI</button><button class="btn" id="calTap">TAP</button><button class="btn ghost" id="calSave" data-en="✓ SAVE">✓ SIMPAN</button></div>
   <div class="calbtns"><button class="btn ghost sm" id="calMinus">−10ms</button><button class="btn ghost sm" id="calPlus">+10ms</button><button class="btn ghost sm" id="calAuto" data-en="AUTO (reset)">OTOMATIS (reset)</button><button class="btn ghost sm" id="calBack" data-en="← BACK">← KEMBALI</button></div>
  </div>
+ <div class="card" id="ytcard" style="display:none">
+  <h1 style="font-size:24px" data-en="🎬 MAP A YOUTUBE SONG">🎬 MAPPING LAGU YOUTUBE</h1>
+  <p class="sub" data-en="Teach the game where this song's beats and sections are. Takes 2 listens: one for tempo, one for structure.">Ajari game di mana ketukan dan bagian-bagian lagu ini. Butuh 2× dengar: sekali untuk tempo, sekali untuk struktur.</p>
+  <div id="ytSlotMap" class="ytslot"></div>
+  <div class="ytbar"><button class="btn sm" id="mPlay" data-en="▶ / ❚❚ (SPACE)">▶ / ❚❚ (SPASI)</button><button class="btn ghost sm" id="mBack5">−5s</button><button class="btn ghost sm" id="mFwd5">+5s</button><span class="mtime" id="mTime">0:00</span><span class="mdot" id="mDot"></span></div>
+  <div class="ytstep"><b data-en="1 · INFO">1 · INFO</b>
+   <div class="row"><input id="mTitle" placeholder="Judul lagu" data-ph-en="Song title"><div class="seg" id="mStyle"><button data-s="edm">EDM</button><button data-s="koplo">KOPLO</button><button data-s="ballad">BALLAD</button></div></div>
+   <div class="note" data-en="Style decides the stage visuals & the rules (e.g. ballad = no strobe, no rushing).">Gaya menentukan visual panggung & aturan main (mis. ballad = nggak boleh strobe, nggak boleh buru-buru).</div></div>
+  <div class="ytstep"><b data-en="2 · TEMPO">2 · TEMPO</b>
+   <div class="note" data-en="Play the song, then press <kbd>T</kbd> on every beat (at least 8×, more = more accurate).">Putar lagunya, lalu tekan <kbd>T</kbd> di setiap ketukan (minimal 8×, makin banyak makin akurat).</div>
+   <div class="row"><button class="btn sm" id="mTap">TAP (T)</button><span class="bpm" id="mBpm">— BPM</span><button class="btn ghost sm" id="mHalf">÷2</button><button class="btn ghost sm" id="mDouble">×2</button><button class="btn ghost sm" id="mBpmM">−0.5</button><button class="btn ghost sm" id="mBpmP">+0.5</button><button class="btn ghost sm" id="mEarly">←10ms</button><button class="btn ghost sm" id="mLate">10ms→</button><button class="btn ghost sm" id="mTapReset" data-en="RESET">ULANG</button><label class="chk"><input type="checkbox" id="mClick"> <span data-en="click">klik</span></label></div></div>
+  <div class="ytstep"><b data-en="3 · STRUCTURE">3 · STRUKTUR</b>
+   <div class="note" data-en="Play from the start. When a section begins press: <kbd>1</kbd> CALM · <kbd>2</kbd> BUILD · <kbd>3</kbd> BIG · <kbd>4</kbd> DROP. <kbd>M</kbd> = key moment (solo, high note). <kbd>E</kbd> = end of song. <kbd>Z</kbd> = undo.">Putar dari awal. Saat sebuah bagian mulai, tekan: <kbd>1</kbd> TENANG · <kbd>2</kbd> BUILD · <kbd>3</kbd> RAMAI · <kbd>4</kbd> DROP. <kbd>M</kbd> = momen penting (solo, nada tinggi). <kbd>E</kbd> = akhir lagu. <kbd>Z</kbd> = undo.</div>
+   <div id="mMarks"></div></div>
+  <div class="calbtns"><button class="btn" id="mSave" data-en="✓ SAVE">✓ SIMPAN</button><button class="btn ghost" id="mCode" data-en="⧉ COPY CODE">⧉ SALIN KODE</button><button class="btn ghost" id="mClose" data-en="← BACK">← KEMBALI</button></div>
+  <div class="note" id="mMsg"></div>
+ </div>
  <div class="card" id="result" style="display:none">
   <div class="res-head"><div class="rank" id="rRank">A</div><div><div class="note" style="margin:0 0 6px" data-en="BROADCAST REPORT">LAPORAN SIARAN</div><div class="quip" id="rQuip"></div></div></div>
   <div class="grid" id="rGrid"></div>
@@ -269,7 +336,7 @@ let LANG=(()=>{try{const v=localStorage.getItem('lcob-lang');if(v)return v}catch
 const EN={"ACID SOLO": "ACID SOLO", "Acid ngamuk. Cut tiap 2 ketuk.": "Acid goes wild. Cut every 2 beats.", "Acid pelan. Gitar & crowd.": "Slow acid. Guitar & crowd.", "BIDUAN CU": "SINGER CU", "Bangun tensi, cut makin rapat.": "Build tension, cut tighter.", "Biduan & gitar.": "Singer & guitar.", "Biduan & kendang.": "Singer & kendang.", "Bisik-bisik. Tahan shot.": "Whisper. Hold your shot.", "Breakdown! Cut tiap 2 ketuk.": "Breakdown! Cut every 2 beats.", "Buka lebar! Wide & crowd.": "Go wide! Wide & crowd.", "Buka sedikit, tetap tenang.": "Open up a little, stay calm.", "Buka sedikit.": "Open up a little.", "CENGKOK": "VOCAL RUN", "CONFETTI di awal chorus, ambil WIDE!": "CONFETTI at the chorus, take WIDE!", "Chord dicacah! Cut tiap 2 ketuk.": "Chopped chords! Cut every 2 beats.", "Chord manis. Wide & crowd.": "Sweet chords. Wide & crowd.", "Close-up, santai.": "Close-ups, relaxed.", "Cuma kick. Gelap. Wide.": "Just kick. Dark. Wide.", "Cut cepat & agresif, ngejar drop.": "Fast, aggressive cuts chasing the drop.", "DROP + confetti, ambil WIDE!": "DROP + confetti, take WIDE!", "Dang-dut! Tutup di wide.": "Dang-dut! End on wide.", "Drop terakhir, habisin!": "Last drop, give it everything!", "FILL GITAR": "GUITAR FILL", "Fokus biduan & kendang.": "Focus on singer & kendang.", "GAS! Cut tiap 2 ketuk.": "GO! Cut every 2 beats.", "GITAR AKUSTIK": "ACOUSTIC GTR", "GITAR MELODI": "LEAD GUITAR", "GITAR MS": "GUITAR MS", "GONG terakhir, tutup di WIDE!": "Final GONG, end on WIDE!", "GOYANG BARENG": "ALL DANCE", "Gitar akustik bicara.": "Let the acoustic guitar speak.", "Gitar isi, ambil petikannya.": "Guitar fills, catch the picking.", "Gitar melodi solo, tahan!": "Lead guitar solo, hold it!", "HIT TERAKHIR": "FINAL HIT", "Half-time: kick-nya jarang, tapi ketukannya tetap rapat.": "Half-time: sparse kick, but the beat is still tight.", "Hit terakhir di wide.": "Final hit on wide.", "Intim & hangat. Petikan gitar jadi napas lagunya.": "Warm & intimate. Fingerpicking is its heartbeat.", "Intim: close-up vokal & gitar.": "Intimate: vocal & guitar close-ups.", "JOGET MASSAL": "MASS DANCE", "Jangan sampai feedback.": "Don't let it feed back.", "Joget massal! Crowd & wide.": "Everyone dances! Crowd & wide.", "KENDANG MS": "KENDANG MS", "KENDANG SOLO! ambil & tahan!": "KENDANG SOLO! Take it & hold!", "KENDANG SOLO! ambil KENDANG & tahan!": "KENDANG SOLO! Take KENDANG & hold!", "KICK BALIK": "KICK RETURNS", "Kendang makin rapat, ikutin!": "Kendang gets tighter, follow it!", "Kesurupan mode. Cut tiap 2 ketuk!": "Trance mode. Cut every 2 beats!", "Kick balik! Wide & crowd.": "Kick is back! Wide & crowd.", "Kick hilang. Tahan napas.": "Kick drops out. Hold your breath.", "LAMPU HP": "PHONE LIGHTS", "LAUTAN LAMPU HP": "SEA OF PHONE LIGHTS", "Lower third panik.": "Lower-third panic.", "MELEDAK": "EXPLODE", "MELEDAK! Boleh lebih cepat.": "EXPLODE! Faster cuts allowed.", "MUDAH–SEDANG": "EASY–MEDIUM", "Mainin lampu live ikut musik.": "Busk the lights live to the music.", "Mulai bisik, berakhir meledak. Tahu kapan harus nahan & kapan lepas.": "Starts as a whisper, ends in an explosion. Know when to hold & when to let go.", "Mulai naik, tetap sabar.": "Rising, stay patient.", "NADA TERAKHIR": "LAST NOTE", "NADA TINGGI": "HIGH NOTE", "NAIK NADA": "KEY CHANGE", "NUNJUK PENONTON": "POINTS AT CROWD", "Naik nada! Paling emosional.": "Key change! Most emotional part.", "Napas dulu. Gitar ambil alih.": "Breathe. Guitar takes over.", "Ngunci groove kendang yang ganjil & nangkep momen panggung.": "Lock into the off-kilter kendang groove & catch stage moments.", "Paling kencang. Kendang jaranan + slompret + gong.": "The fastest. Jaranan kendang + slompret + gong.", "Pelan-pelan, tutup di wide.": "Ease out, end on wide.", "Penonton goyang. Crowd & wide.": "Crowd is dancing. Crowd & wide.", "Penonton joget! Crowd & wide.": "Crowd dances! Crowd & wide.", "Petikan gitar. Pelan.": "Fingerpicking. Slow.", "Piano masuk. Pelan, jangan buru-buru.": "Piano enters. Slow, don't rush.", "Piano sendirian. Tenang.": "Solo piano. Calm.", "Pilih kamera, cut on-beat.": "Pick cameras, cut on-beat.", "REFF TERAKHIR": "LAST CHORUS", "REFF masuk, ambil CROWD!": "Chorus hits, take CROWD!", "REFF masuk, penonton joget massal, ambil CROWD!": "Chorus hits, mass dance, take CROWD!", "REFF masuk, penonton nyawer, ambil CROWD!": "Chorus hits, crowd showers tips, take CROWD!", "Rapatkan cut!": "Tighten your cuts!", "Reff terakhir, buka lebar.": "Last chorus, go wide.", "Repetitif & hipnotis. Perubahannya halus, harus dirasain.": "Repetitive & hypnotic. Changes are subtle, feel them.", "SAWERAN": "TIP SHOWER", "SEDANG": "MEDIUM", "SEDANG–SUSAH": "MEDIUM–HARD", "SEMUA NYANYI": "SING-ALONG", "SOLO AKUSTIK": "ACOUSTIC SOLO", "SOLO GITAR": "GUITAR SOLO", "SPOT SOLO": "SPOT SOLO", "SPOT VOKAL": "SPOT VOCAL", "SUSAH": "HARD", "SUSAH (BENERAN)": "HARD (FOR REAL)", "Sabar. Cut jarang, tapi tiap cut harus bermakna.": "Patience. Few cuts, every one must matter.", "Santai ala orkes lawas. Gitar melodi jadi bintangnya.": "Laid-back old-school orkes. The lead guitar is the star.", "Santai. Wide & crowd.": "Relaxed. Wide & crowd.", "Semua ikut nyanyi.": "Everyone sings along.", "Slompret & gong. Wide & kendang.": "Slompret & gong. Wide & kendang.", "Snare makin rapat, ikutin!": "Snare speeds up, follow it!", "Solo gitar, drum mulai bangun.": "Guitar solo, drums start building.", "Standby… GO!": "Standby… GO!", "Suling buka, wide & kendang.": "Flute opens, wide & kendang.", "Suling buka. Wide & gitar.": "Flute opens. Wide & guitar.", "Sunyi lagi. Tutup di wajah.": "Quiet again. End on the face.", "TANGAN DI ATAS": "HANDS UP", "Tahan shot. Biarkan bernapas.": "Hold the shot. Let it breathe.", "Turunin, tutup di wide.": "Bring it down, end on wide.", "Tutup di wajah, bukan wide.": "End on the face, not wide.", "Tutup di wajah.": "End on the face.", "Tutup di wide, tunggu GONG.": "End on wide, wait for the GONG.", "VOKAL CU": "VOCAL CU", "acid solo, ambil GITAR & tahan!": "acid solo, take GUITAR & hold!", "biduan mau cengkok panjang, siap close-up!": "singer about to do a long run, get the close-up!", "biduan mau cengkok, siap close-up!": "singer about to do a run, get the close-up!", "biduan narik cengkok, siap close-up!": "singer doing a run, get the close-up!", "breakdown, gitar solo, ambil & tahan!": "breakdown, guitar solo, take it & hold!", "chorus akhir MELEDAK, buka WIDE!": "final chorus EXPLODES, go WIDE!", "chorus akhir, semua nyanyi, buka WIDE!": "final chorus, sing-along, go WIDE!", "chorus masuk, lampu HP nyala, ambil CROWD!": "chorus hits, phone lights up, take CROWD!", "chorus masuk, penonton nyalain HP, ambil CROWD!": "chorus hits, phones light up, take CROWD!", "drop kedua, penonton loncat, ambil CROWD!": "second drop, crowd jumps, take CROWD!", "gitar isi melodi, ambil GITAR & tahan!": "guitar fill, take GUITAR & hold!", "gitar melodi solo, ambil & tahan!": "lead guitar solo, take it & hold!", "hit terakhir, tetap di WIDE!": "final hit, stay on WIDE!", "hit terakhir, tutup di WIDE!": "final hit, end on WIDE!", "key change di chorus akhir, buka WIDE!": "key change in the final chorus, go WIDE!", "kick balik, ambil WIDE!": "kick returns, take WIDE!", "nada terakhir, tutup di CLOSE-UP vokal (bukan wide)!": "last note, end on the vocal CLOSE-UP (not wide)!", "nada terakhir, tutup di CLOSE-UP!": "last note, end on the CLOSE-UP!", "nada tinggi, SPOT ke vokalis!": "high note, SPOT the singer!", "reff terakhir, satu panggung, ambil WIDE!": "last chorus, whole stage, take WIDE!", "sample vokal masuk, close-up!": "vocal sample drops, close-up!", "satu panggung goyang bareng, ambil WIDE!": "whole stage dances together, take WIDE!", "satu panggung goyang, ambil WIDE!": "whole stage dances, take WIDE!", "semua angkat tangan, ambil CROWD!": "hands in the air, take CROWD!", "solo gitar akustik, ambil GITAR & tahan!": "acoustic guitar solo, take GUITAR & hold!", "solo gitar distorsi, ambil & tahan!": "distorted guitar solo, take it & hold!", "solo gitar masuk, ambil GITAR & tahan!": "guitar solo, take GUITAR & hold!", "vokal panjang masuk, siap close-up!": "long vocal coming, get the close-up!", "vokalis mau narik nada tinggi, siap close-up!": "singer going for the high note, get the close-up!", "vokalis narik nada tinggi, close-up!": "singer hits the high note, close-up!", "vokalis narik nada tinggi, siap close-up!": "singer hits the high note, get the close-up!", "vokalis nunjuk penonton, ambil CROWD!": "singer points at the crowd, take CROWD!", "CHORUS AKHIR": "FINAL CHORUS", "JOGET": "DANCE BREAK", "MELODI": "MELODY", "VERSE 2": "VERSE 2", "REFF 2": "REFF 2", "warna penuh": "full color wash", "moving head nyapu": "moving heads sweep", "kedip putih": "white flashes", "follow spot": "follow spot", "gelap total": "total darkness"};
 const tr=x=>LANG==='en'&&EN[x]!==undefined?EN[x]:x;
 const L=(id,en)=>LANG==='en'?en:id;
-function applyStatic(){document.documentElement.lang=LANG;document.querySelectorAll('[data-en]').forEach(el=>{if(el.dataset.idv===undefined)el.dataset.idv=el.innerHTML;el.innerHTML=LANG==='en'?el.dataset.en:el.dataset.idv});document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG))}
+function applyStatic(){document.documentElement.lang=LANG;document.querySelectorAll('[data-en]').forEach(el=>{if(el.dataset.idv===undefined)el.dataset.idv=el.innerHTML;el.innerHTML=LANG==='en'?el.dataset.en:el.dataset.idv});document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG));document.querySelectorAll('[data-ph-en]').forEach(el=>{if(el.dataset.phid===undefined)el.dataset.phid=el.placeholder;el.placeholder=LANG==='en'?el.dataset.phEn:el.dataset.phid})}
 
 // ================= AUDIO ENGINE =================
 let USER_OFF=(()=>{try{const v=localStorage.getItem('lcob-offset');return v===null?null:+v}catch(e){return null}})();
@@ -278,9 +345,14 @@ const mf=m=>440*Math.pow(2,(m-69)/12);
 function initAudio(){
  if(ac)return;
  ac=new (window.AudioContext||window.webkitAudioContext)();
+ buildBus();
+}
+function buildBus(){
+ if(master){try{master.disconnect();padBus.disconnect()}catch(e){}}
  const comp=ac.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=4;
  master=ac.createGain();master.gain.value=.8;master.connect(comp);comp.connect(ac.destination);
  padBus=ac.createGain();padBus.connect(master);
+ if(noiseBuf)return;
  noiseBuf=ac.createBuffer(1,ac.sampleRate*2,ac.sampleRate);
  const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
 }
@@ -671,7 +743,8 @@ function buildLM(){const LM=[],ballad=SONG.style==='ballad';
  SONG.sections.forEach(s=>{const k=kindOf(s);if((k==='big'||k==='drop')&&s.from>0){const b=s.from*4,soft=ballad&&!(SONG.strobeOK||[]).includes(s.name);LM.push({beat:b-1,looks:['BLACKOUT'],short:'BLACKOUT',desc:L(`BLACKOUT 1 ketuk sebelum ${s.name}, terus ${soft?'WASH/BEAMS':'STROBE/BEAMS'} pas masuk!`,`BLACKOUT 1 beat before ${tr(s.name)}, then ${soft?'WASH/BEAMS':'STROBE/BEAMS'} as it hits!`)});LM.push({beat:b,looks:soft?['WASH','BEAMS']:['STROBE','BEAMS'],short:L(s.name+' MELEDAK',tr(s.name)+' HITS'),quiet:1})}});
  if(SONG.fx.high)LM.push({beat:SONG.fx.high[0]+1,looks:['SPOT'],short:'SPOT VOKAL',desc:'nada tinggi, SPOT ke vokalis!'});
  if(SONG.fx.solo)LM.push({beat:SONG.fx.solo[0],looks:['SPOT'],short:'SPOT SOLO',desc:L(`solo ${SONG.cam3==='guitar'||SONG.style!=='koplo'?'gitar':'kendang'}, SPOT & tahan!`,`${SONG.cam3==='guitar'||SONG.style!=='koplo'?'guitar':'kendang'} solo, SPOT & hold!`),hold:SONG.style==='ballad'?8:7});
- const fin=SONG.fx.final??SONG.fx.finalCU;LM.push({beat:fin,looks:ballad?['SPOT']:['STROBE'],short:'HIT TERAKHIR',desc:ballad?L('nada terakhir, SPOT ke vokalis!','last note, SPOT the singer!'):L('hit terakhir, STROBE!','final hit, STROBE!')});
+ if(SONG.ytMoments)SONG.ytMoments.forEach((b,i)=>LM.push({beat:b,looks:['SPOT','STROBE'],short:L('MOMEN ','MOMENT ')+(i+1),desc:L('momen penting, SPOT atau STROBE!','key moment, SPOT or STROBE!')}));
+ const fin=SONG.fx.final??SONG.fx.finalCU;if(fin!=null)LM.push({beat:fin,looks:ballad?['SPOT']:['STROBE'],short:'HIT TERAKHIR',desc:ballad?L('nada terakhir, SPOT ke vokalis!','last note, SPOT the singer!'):L('hit terakhir, STROBE!','final hit, STROBE!')});
  return LM.sort((a,b)=>a.beat-b.beat)}
 const sectionAt=b=>{const bar=Math.floor(b/4);if(bar<0)return SECTIONS[0];for(const s of SECTIONS)if(bar>=s.from&&bar<s.to)return s;return SECTIONS[SECTIONS.length-1]};
 const isRepo=(cam,b)=>REPOS.some(r=>r.cam===cam&&b>=r.from-0.5&&b<r.to);
@@ -696,14 +769,14 @@ function loadSong(id){
  camDivs.forEach((d,i)=>d.querySelector('.lbl').textContent=`${i+1} · ${tr(CAMS[i+1])}`);
  $('rd').innerHTML=SECTIONS.map(s=>`<div><b>${tr(s.name)}</b>bar ${s.from+1}–${s.to} · ${tr(s.tip)}</div>`).join('');
  rdEls=[...$('rd').children];
- document.body.classList.toggle('mode-light',MODE==='light');$('songTag').textContent=`${SONG.title.toUpperCase()} · ${SONG.bpm} BPM`;
+ document.body.classList.toggle('mode-light',MODE==='light');document.body.classList.toggle('mode-yt',!!SONG.yt);$('songTag').textContent=`${SONG.title.toUpperCase()} · ${SONG.bpm} BPM`;
 }
 
 // ================= STATE =================
 let S;
 function reset(){S={state:'menu',pgm:1,pvw:2,score:0,combo:0,maxCombo:0,hype:50,hold:0,lastCut:-99,look:'WASH',warned:false,perfect:0,good:0,off:0,haram:0,rushed:0,pref:0,cuts:0,momentsHit:0,mDone:new Set(),lastBeat:-6,ic:0,hypeSum:0,hypeN:0,missed:[],validCuts:0,overBeats:0,jitter:0,pingpong:0,lastPP:-9,prepared:0,secCams:{},camHist:[]}}
-const songBeat=()=>(ac.currentTime-lat-T0)/SPB;
-const visBeat=()=>(S.state==='live'||S.state==='end')&&ac?songBeat():performance.now()/1000/SPB;
+const songBeat=()=>SONG&&SONG.yt?(ytNow()-lat-SONG.t0)/SPB:(ac.currentTime-lat-T0)/SPB;
+const visBeat=()=>(S.state==='live'||S.state==='end'||S.state==='paused')&&(ac||SONG.yt)?songBeat():performance.now()/1000/SPB;
 const addHype=v=>{S.hype=Math.max(0,Math.min(100,S.hype+v))};
 const best=id=>{try{return +localStorage.getItem('lcob-best-'+MODE+'-'+id)||0}catch(e){return 0}};
 const saveBest=(id,v)=>{try{if(v>best(id))localStorage.setItem('lcob-best-'+MODE+'-'+id,v)}catch(e){}};
@@ -770,7 +843,12 @@ function checkMoments(b){
   else{S.missed.push(tr(m.short));addHype(-10);pop(L('MOMEN LEWAT','MOMENT MISSED'),'red',tr(m.short)+L(' harusnya ',' needed ')+(m.cam?'CAM '+m.cam:m.looks.join('/')))}}
 }
 function start(){
- initAudio();ac.resume();lat=USER_OFF!==null?USER_OFF/1000:(ac.outputLatency||0)+(ac.baseLatency||0);
+ initAudio();ac.resume();
+ if(SONG.yt){if(!YT.ready){ytNote(L('Player YouTube belum siap. Fitur ini cuma jalan di versi GitHub (dilawafa.github.io), tunggu sebentar lalu coba lagi.','YouTube player not ready. This only works on the GitHub version, wait a moment and retry.'));setSongsOpen(true);return}
+  lat=USER_OFF!==null?USER_OFF/1000:.03;reset();S.state='live';$('log').innerHTML='';$('count').textContent='';
+  ytCue(SONG.vid,()=>{YT.player.seekTo(Math.max(0,SONG.t0-4*SPB),true);YT.player.playVideo()});
+  clearInterval(schedTimer);$('overlay').classList.add('hide');$('hdr').classList.add('live');return}
+ lat=USER_OFF!==null?USER_OFF/1000:(ac.outputLatency||0)+(ac.baseLatency||0);
  reset();S.state='live';$('log').innerHTML='';$('count').textContent='';
  T0=ac.currentTime+.4+4*SPB;nextStep=0;
  clearInterval(schedTimer);schedTimer=setInterval(schedule,25);
@@ -778,7 +856,7 @@ function start(){
 }
 function schedule(){const ahead=ac.currentTime+.12,total=BARS*16;while(nextStep<total&&T0+nextStep*SPB/4<ahead){SONG.play(nextStep,T0+nextStep*SPB/4);nextStep++}}
 function endGame(){
- S.state='end';clearInterval(schedTimer);$('hdr').classList.remove('live');
+ S.state='end';clearInterval(schedTimer);$('hdr').classList.remove('live');if(SONG.yt&&YT.ready)try{YT.player.pauseVideo()}catch(e){}
  const cuts=S.cuts||1,acc=(S.perfect+S.good*.6)/cuts,mom=S.momentsHit/MOMENTS.length,hy=S.hypeN?S.hypeSum/S.hypeN:0;
  const minCuts=SONG.style==='ballad'?(MODE==='light'?5:6):(MODE==='light'?8:10);
  const judged=S.perfect+S.good+S.off,cl=v=>Math.max(0,Math.min(100,Math.round(v)));
@@ -816,7 +894,7 @@ function endGame(){
  $('rTips').innerHTML=tips.join('<br><br>');
  $('menu').style.display='none';$('result').style.display='block';$('overlay').classList.remove('hide');
 }
-function showMenu(){S.state='menu';$('calib').style.display='none';renderRoles();renderSongs();$('result').style.display='none';$('menu').style.display='block';$('overlay').classList.remove('hide')}
+function showMenu(){S.state='menu';$('calib').style.display='none';$('ytcard').style.display='none';renderRoles();renderSongs();$('result').style.display='none';$('menu').style.display='block';$('overlay').classList.remove('hide')}
 let selected='koplo';
 function setSongsOpen(v){$('songWrap').classList.toggle('collapsed',!v);$('songChev').textContent=v?L('TUTUP ▴','CLOSE ▴'):L('GANTI LAGU ▾','CHANGE SONG ▾')}
 $('songToggle').onclick=()=>setSongsOpen($('songWrap').classList.contains('collapsed'));
@@ -828,12 +906,17 @@ function renderRoles(){
 function renderSongs(){
  $('songs').innerHTML=['EDM','KOPLO','BALLAD'].map(gp=>`<div class="gcol"><div class="gh">${gp}</div>`+Object.values(SONGS).filter(s=>s.group===gp).map(s=>`<button class="song${s.id===selected?' sel':''}" data-id="${s.id}"><span class="g">${s.genre} · ${s.bpm} BPM</span><b>${s.title}</b><span class="tr">${tr(s.trains)}</span><span class="meta">${tr(s.diff)}${best(s.id)?` · ${L('Rekor','Best')} ${best(s.id)}`:''}</span></button>`).join('')+'</div>').join('');
  [...$('songs').querySelectorAll('.song')].forEach(el=>el.onclick=()=>{selected=el.dataset.id;loadSong(selected);setSongsOpen(false);renderSongs()});
+ renderYtList();
  const cs=SONGS[selected];$('songSel').innerHTML=`<span class="g">${cs.genre} · ${cs.bpm} BPM · ${tr(cs.diff)}</span><b>${cs.title}</b><span class="tr">${tr(cs.trains)}${best(cs.id)?` · ${L('Rekor','Best')} ${best(cs.id)}`:''}</span>`;
 }
 $('start').onclick=start;$('again').onclick=start;$('change').onclick=showMenu;
 $('take').addEventListener('pointerdown',e=>{e.preventDefault();take()});
 addEventListener('keydown',e=>{
- if(e.repeat)return;const k=e.key;if(CAL.on&&(k===' '||k==='Enter')){e.preventDefault();calTap();return}if($('calib').style.display==='block'&&(k===' '||k==='Enter')){e.preventDefault();return}
+ if(e.repeat)return;const k=e.key;
+ if(e.target&&e.target.tagName==='INPUT'&&e.target.type!=='checkbox')return;
+ if(!$('quitModal').classList.contains('hide')){e.preventDefault();if(k==='Escape')resumeGame();return}
+ if(k==='Escape'&&S.state==='live'){e.preventDefault();openQuit();return}
+ if($('ytcard').style.display==='block'){if(mapKey(e))return}if(CAL.on&&(k===' '||k==='Enter')){e.preventDefault();calTap();return}if($('calib').style.display==='block'&&(k===' '||k==='Enter')){e.preventDefault();return}
  if(MODE==='light'){const i=+k-1;if(i>=0&&i<5){lightPress(LOOKS[i]);e.preventDefault();return}if(k==='b'||k==='B'){lightPress('BLACKOUT');return}}
  if(MODE==='switch'&&k>='1'&&k<='4'){S.pvw=+k;e.preventDefault()}
  else if(k===' '||k==='Enter'){e.preventDefault();if(S.state==='live'){if(MODE==='switch')take()}else if(!$('overlay').classList.contains('hide'))start()}
@@ -978,7 +1061,7 @@ function hud(b){
  const nx=SECTIONS[si+1];$('next').textContent=b<0?'':nx?L(`${nx.name} dalam ${Math.max(0,Math.ceil(nx.from*4-b))} ketuk`,`${tr(nx.name)} in ${Math.max(0,Math.ceil(nx.from*4-b))} beats`):L('menuju akhir','almost done');
 }
 function frame(){
- requestAnimationFrame(frame);
+ requestAnimationFrame(frame);placeYT();mapFrame();
  const t=performance.now()/1000,b=visBeat();
  if(S.state==='live'){while(S.lastBeat<Math.floor(b)){S.lastBeat++;onBeat(S.lastBeat)}checkMoments(b);hud(b);if(b>=BEATS+1.5)endGame()}
  if(MODE==='light'){$('pgmPre').textContent='STAGE';$('pgmName').textContent=`LOOK: ${S.look}`;$('pvwPre').textContent='CROWD CAM';$('pvwName').textContent=L('reaksi penonton','crowd reaction');
@@ -1011,8 +1094,113 @@ $('calOpen').onclick=calShow;$('calStart').onclick=calStart;$('calTap').addEvent
 $('calSave').onclick=()=>{USER_OFF=CAL.res;try{USER_OFF===null?localStorage.removeItem('lcob-offset'):localStorage.setItem('lcob-offset',USER_OFF)}catch(e){}calLabel();$('calib').style.display='none';$('menu').style.display='block'};
 $('calMinus').onclick=()=>{CAL.res=(CAL.res??0)-10;calRender()};$('calPlus').onclick=()=>{CAL.res=(CAL.res??0)+10;calRender()};$('calAuto').onclick=()=>{CAL.res=null;calRender()};
 $('calBack').onclick=()=>{CAL.on=false;$('calib').style.display='none';$('menu').style.display='block'};
+// ===== YOUTUBE =====
+const YT_={};const YT={ready:false,player:null,vid:null,aV:0,aP:0,lastV:-1,cueCb:null,failed:false};
+function ytNote(t){$('ytMsg').innerHTML=t}
+function ytId(u){u=(u||'').trim();let m=u.match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([A-Za-z0-9_-]{11})/);if(m)return m[1];if(/^[A-Za-z0-9_-]{11}$/.test(u))return u;return null}
+function ytLoadApi(){if(window.YT&&window.YT.Player){ytMake();return}window.onYouTubeIframeAPIReady=ytMake;const sc=document.createElement('script');sc.src='https://www.youtube.com/iframe_api';sc.onerror=()=>{YT.failed=true};document.head.appendChild(sc);
+ setTimeout(()=>{if(!YT.ready){YT.failed=true;ytNote(L('⚠️ Player YouTube nggak bisa dimuat di sini. Fitur ini jalan di versi GitHub: <b>dilawafa.github.io/live-cut-on-the-beat</b>','⚠️ The YouTube player can\'t load here. Use the GitHub version: <b>dilawafa.github.io/live-cut-on-the-beat</b>'))}},8000)}
+function ytMake(){if(YT.player)return;YT.player=new window.YT.Player('ytPlayer',{width:'100%',height:'100%',playerVars:{playsinline:1,rel:0,modestbranding:1,controls:1,disablekb:1},
+ events:{onReady:()=>{YT.ready=true;ytNote('');if(YT.cueCb){const f=YT.cueCb;YT.cueCb=null;f()}},
+  onStateChange:e=>{if(e.data===5||e.data===1){if(YT.cueCb){const f=YT.cueCb;YT.cueCb=null;f()}}},
+  onError:e=>{const m=(e.data===101||e.data===150)?L('Video ini nggak mengizinkan diputar di luar YouTube (embed dimatikan pemiliknya). Coba video lain, misalnya versi lirik atau live.','This video doesn\'t allow embedding (disabled by the owner). Try another upload, e.g. a lyric or live version.'):L('Video nggak bisa diputar (kode '+e.data+').','Video can\'t be played (code '+e.data+').');ytNote('⚠️ '+m);$('mMsg').innerHTML='⚠️ '+m}}})}
+function ytCue(vid,cb){if(!YT.ready){YT.cueCb=()=>ytCue(vid,cb);return}if(YT.vid!==vid){YT.vid=vid;YT.cueCb=cb;YT.player.cueVideoById(vid)}else cb&&cb()}
+function ytNow(){if(!YT.ready)return 0;const p=performance.now();let v=0,st=-1;try{v=YT.player.getCurrentTime()||0;st=YT.player.getPlayerState()}catch(e){}
+ if(st!==1){YT.aV=v;YT.aP=p;YT.lastV=v;return v}
+ let e=YT.aV+(p-YT.aP)/1000;if(Math.abs(v-e)>.15){YT.aV=v;YT.aP=p;e=v}else if(v!==YT.lastV){YT.aV+=(v-e)*.25;e=YT.aV+(p-YT.aP)/1000}YT.lastV=v;return e}
+function placeYT(){const h=$('ytHost');let slot=null;
+ if($('ytcard').style.display==='block'&&!$('overlay').classList.contains('hide'))slot=$('ytSlotMap');
+ else if(SONG&&SONG.yt&&S.state!=='menu')slot=$('ytSlot');
+ if(!slot){h.style.left='-9999px';return}const r=slot.getBoundingClientRect();h.style.left=r.left+'px';h.style.top=r.top+'px';h.style.width=r.width+'px';h.style.height=r.height+'px';h.style.zIndex=slot.id==='ytSlotMap'?12:4}
+// ---- penyimpanan ----
+const ytStore=()=>{try{return JSON.parse(localStorage.getItem('lcob-yt')||'{}')}catch(e){return{}}};
+const ytSave=o=>{try{localStorage.setItem('lcob-yt',JSON.stringify(o))}catch(e){}};
+const ytCode=m=>'LCOB1:'+btoa(unescape(encodeURIComponent(JSON.stringify(m))));
+const ytDecode=c=>{try{return JSON.parse(decodeURIComponent(escape(atob(c.trim().slice(6)))))}catch(e){return null}};
+// ---- lagu dari beatmap ----
+function ytSong(m){
+ if(!m||!m.bpm||!m.marks||!m.marks.length)return null;const spb=60/m.bpm,st=m.style||'edm',bal=st==='ballad';
+ const mk=[...m.marks].sort((a,b)=>a.bar-b.bar).filter((x,i,a)=>!i||x.bar!==a[i-1].bar);const b0=mk[0].bar;
+ const endBar=Math.max((m.endBar??(mk[mk.length-1].bar+8)),mk[mk.length-1].bar+1)-b0;
+ const PAL={calm:bal?['#ff9a5a','#ffd29a']:['#3a5cff','#9a3cff'],build:bal?['#8a6aff','#ff9ad2']:['#ff3cd2','#3cc8ff'],big:bal?['#ffc84a','#ff6a8a']:['#ffd23c','#ff3c3c'],drop:bal?['#ffe23c','#ff2c2c']:['#3cffb4','#ff3cf0']};
+ const NM={calm:['VERSE','VERSE','VERSE'],build:['BUILD','PRE-REFF','BRIDGE'],big:['CHORUS','REFF','CHORUS'],drop:['DROP','JOGET','CHORUS AKHIR']};const si=st==='koplo'?1:bal?2:0;
+ const cnt={};const sections=[];
+ mk.forEach((x,i)=>{const from=x.bar-b0,to=i+1<mk.length?mk[i+1].bar-b0:endBar;if(to<=from)return;const k=x.kind;
+  let base=(i===0&&k==='calm'&&mk.length>1)?'INTRO':NM[k][si];cnt[base]=(cnt[base]||0)+1;const name=cnt[base]>1?base+' '+cnt[base]:base;
+  const S2={calm:[bal?12:8,bal?6:0],build:[4,bal?4:0],big:[bal?8:4,bal?4:0],drop:[bal?4:2,bal?2:0]}[k];
+  const pref={calm:i===0?[1,4]:[2,3],build:[2,1],big:[1,4,2],drop:[1,2,3,4]}[k];
+  const tip={calm:L('Tenang. Tahan shot, close-up.','Calm. Hold shots, close-ups.'),build:L('Bangun tensi, cut makin rapat.','Build tension, cut tighter.'),big:L('Buka lebar! Wide & crowd.','Go wide! Wide & crowd.'),drop:L('GAS! Cut tiap 2 ketuk.','GO! Cut every 2 beats.')}[k];
+  sections.push({name,k,from,to,pref,maxHold:S2[0],minHold:S2[1]||undefined,col:PAL[k],tip})});
+ const secAt=b=>sections.find(x=>b>=x.from*4&&b<x.to*4)||sections[0];
+ let alt=0;const moments=(m.moments||[]).map(b=>b-b0*4).filter(b=>b>=2&&b<endBar*4).sort((a,b)=>a-b).filter((b,i,a)=>!i||b-a[i-1]>=4).map((b,i)=>{const k=secAt(b).k;const cam=k==='drop'?3:k==='big'?(alt++%2?1:4):2;
+  return{beat:b,cam,short:L('MOMEN ','MOMENT ')+(i+1),desc:L(`momen penting, ambil CAM ${cam}!`,`key moment, take CAM ${cam}!`)}});
+ const repos=[];let rc=0;sections.forEach((x,i)=>{if(i===0||repos.length>=4||x.to-x.from<4)return;const f=x.from*4+4,t=f+6;for(let j=0;j<4;j++){const cam=[2,4,1,3][(rc+j)%4];if(!moments.some(mm=>mm.cam===cam&&mm.beat>=f-8&&mm.beat<=t+8)){repos.push({cam,from:f,to:t});rc++;break}}});
+ const cams=st==='koplo'?{1:'WIDE',2:'BIDUAN CU',3:'GITAR MS',4:'CROWD'}:{1:'WIDE',2:'VOKAL CU',3:'GITAR MS',4:'CROWD'};
+ return{id:'yt:'+m.vid,yt:true,vid:m.vid,t0:m.t0+b0*4*spb,group:'YOUTUBE',title:m.title||'YouTube',genre:'YOUTUBE · '+st.toUpperCase(),bpm:Math.round(m.bpm*10)/10,bars:endBar,play:()=>{},style:st,cam3:'guitar',diff:'CUSTOM',
+  trains:L('Lagu YouTube, struktur dari mapping kamu.','YouTube song, structure from your mapping.'),cams,fx:{},sections,moments,repos,ytMoments:moments.map(x=>x.beat)}}
+function ytRegister(m){const sg=ytSong(m);if(sg)SONGS[sg.id]=sg;return sg}
+function renderYtList(){const st=ytStore();const ks=Object.keys(st);
+ $('ytList').innerHTML=ks.length?ks.map(v=>{const m=st[v],id='yt:'+v;return`<div class="ytitem${selected===id?' sel':''}" data-v="${v}"><button class="ytpick" data-v="${v}"><span class="g">YOUTUBE · ${(m.style||'edm').toUpperCase()} · ${m.bpm?Math.round(m.bpm*10)/10:'—'} BPM</span><b>${(m.title||v).replace(/</g,'&lt;')}</b></button><button class="ytact" data-ed="${v}">${L('EDIT','EDIT')}</button><button class="ytact" data-cp="${v}">${L('KODE','CODE')}</button><button class="ytact del" data-del="${v}">✕</button></div>`}).join(''):`<div class="note">${L('Belum ada lagu YouTube. Tempel link di atas, lalu klik + MAP LAGU.','No YouTube songs yet. Paste a link above and click + MAP SONG.')}</div>`;
+ $('ytList').querySelectorAll('.ytpick').forEach(b=>b.onclick=()=>{const m=ytStore()[b.dataset.v];const sg=ytRegister(m);if(!sg){ytNote(L('Beatmap ini belum lengkap (butuh tempo & minimal 1 bagian). Klik EDIT.','This beatmap is incomplete (needs tempo & at least 1 section). Click EDIT.'));return}selected=sg.id;loadSong(selected);setSongsOpen(false);renderSongs()});
+ $('ytList').querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>mapOpen(ytStore()[b.dataset.ed]));
+ $('ytList').querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>{const c=ytCode(ytStore()[b.dataset.cp]);try{navigator.clipboard.writeText(c).then(()=>ytNote(L('Kode beatmap tersalin. Kirim ke teman, mereka tinggal tempel di kolom di atas.','Beatmap code copied. Send it to friends, they just paste it above.')),()=>ytNote(c))}catch(e){ytNote(c)}});
+ $('ytList').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(b.dataset.sure){const o=ytStore();delete o[b.dataset.del];ytSave(o);if(selected==='yt:'+b.dataset.del){selected='koplo';loadSong(selected);renderSongs()}renderYtList()}else{b.dataset.sure=1;b.textContent=L('YAKIN?','SURE?')}})}
+$('ytNew').onclick=()=>{const v=$('ytUrl').value.trim();if(v.startsWith('LCOB1:')){const m=ytDecode(v);if(!m||!m.vid){ytNote(L('Kode beatmap nggak valid.','Invalid beatmap code.'));return}const o=ytStore();o[m.vid]=m;ytSave(o);$('ytUrl').value='';ytNote(L('Beatmap diimpor! Pilih di daftar di bawah.','Beatmap imported! Pick it from the list below.'));renderYtList();return}
+ const id=ytId(v);if(!id){ytNote(L('Link YouTube-nya nggak kebaca. Contoh: https://youtu.be/xxxxxxxxxxx','Couldn\'t read that YouTube link. Example: https://youtu.be/xxxxxxxxxxx'));return}$('ytUrl').value='';mapOpen(ytStore()[id]||{vid:id,title:'',style:'edm',taps:[],marks:[],moments:[]})};
+// ---- MAPPING ----
+let MAP=null;
+function mapOpen(m){initAudio();ac.resume();MAP=JSON.parse(JSON.stringify(m));MAP.taps=MAP.taps||[];MAP.marks=MAP.marks||[];MAP.moments=MAP.moments||[];MAP.lastClick=-1;
+ $('menu').style.display='none';$('ytcard').style.display='block';$('mTitle').value=MAP.title||'';$('mMsg').textContent='';mapStyle(MAP.style||'edm');mapRender();
+ ytCue(MAP.vid,()=>{try{const d=YT.player.getVideoData();if(!MAP.title&&d&&d.title){MAP.title=d.title;$('mTitle').value=d.title}}catch(e){}});
+ if(!YT.ready&&YT.failed)$('mMsg').innerHTML=$('ytMsg').innerHTML}
+function mapStyle(s){MAP.style=s;$('mStyle').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.s===s))}
+$('mStyle').querySelectorAll('button').forEach(b=>b.onclick=()=>mapStyle(b.dataset.s));
+function mapFit(){const t=MAP.taps;if(t.length<4)return;let d=[];for(let i=1;i<t.length;i++)d.push(t[i]-t[i-1]);d.sort((a,b)=>a-b);const med=d[Math.floor(d.length/2)];
+ const idx=[0];for(let i=1;i<t.length;i++)idx.push(idx[i-1]+Math.max(1,Math.round((t[i]-t[i-1])/med)));
+ const n=t.length,mx=idx.reduce((a,b)=>a+b,0)/n,my=t.reduce((a,b)=>a+b,0)/n;let sxy=0,sxx=0;for(let i=0;i<n;i++){sxy+=(idx[i]-mx)*(t[i]-my);sxx+=(idx[i]-mx)**2}
+ const per=sxy/sxx;MAP.bpm=60/per;MAP.t0=my-per*mx;MAP.nTap=n}
+function mapRender(){$('mBpm').innerHTML=MAP.bpm?`<b>${MAP.bpm.toFixed(1)}</b> BPM <span class="note">(${MAP.nTap||MAP.taps.length} tap)</span>`:`— BPM <span class="note">(${MAP.taps.length}/8)</span>`;
+ const spb=MAP.bpm?60/MAP.bpm:0,fmt=x=>{x=Math.max(0,x);return Math.floor(x/60)+':'+String(Math.floor(x%60)).padStart(2,'0')};
+ const KL={calm:L('TENANG','CALM'),build:'BUILD',big:L('RAMAI','BIG'),drop:'DROP'};
+ const items=[...MAP.marks.map(x=>({t:MAP.t0+x.bar*4*spb,h:`<b class="k-${x.kind}">${KL[x.kind]}</b> · bar ${x.bar}`,del:'s'+x.bar})),...MAP.moments.map(b=>({t:MAP.t0+b*spb,h:`<b class="k-m">${L('MOMEN','MOMENT')}</b> · beat ${b}`,del:'m'+b}))];
+ if(MAP.endBar!=null)items.push({t:MAP.t0+MAP.endBar*4*spb,h:`<b class="k-e">${L('AKHIR','END')}</b> · bar ${MAP.endBar}`,del:'e'});
+ items.sort((a,b)=>a.t-b.t);
+ $('mMarks').innerHTML=items.length?items.map(x=>`<span class="mk">${fmt(x.t)} ${x.h} <button data-d="${x.del}">✕</button></span>`).join(''):`<span class="note">${L('Belum ada tanda.','No marks yet.')}</span>`;
+ $('mMarks').querySelectorAll('button').forEach(b=>b.onclick=()=>{const d=b.dataset.d;if(d==='e')MAP.endBar=null;else if(d[0]==='s')MAP.marks=MAP.marks.filter(x=>x.bar!==+d.slice(1));else MAP.moments=MAP.moments.filter(x=>x!==+d.slice(1));mapRender()})}
+function mapTap(){if(!YT.ready)return;MAP.taps.push(ytNow());if(MAP.taps.length>64)MAP.taps.shift();mapFit();mapRender();$('mTap').classList.add('press');setTimeout(()=>$('mTap').classList.remove('press'),80)}
+function mapMark(kind){if(!MAP.bpm){$('mMsg').textContent=L('Kunci tempo dulu (tap T minimal 8×).','Lock the tempo first (tap T at least 8×).');return}const spb=60/MAP.bpm,b=(ytNow()-MAP.t0)/spb;
+ if(kind==='m'){const mb=Math.round(b);if(!MAP.moments.includes(mb))MAP.moments.push(mb)}else if(kind==='e'){MAP.endBar=Math.round(b/4)}else{const bar=Math.round(b/4);MAP.marks=MAP.marks.filter(x=>x.bar!==bar);MAP.marks.push({bar,kind})}
+ MAP.hist=(MAP.hist||[]);MAP.hist.push(kind);mapRender()}
+function mapUndo(){const k=(MAP.hist||[]).pop();if(!k)return;if(k==='m')MAP.moments.pop();else if(k==='e')MAP.endBar=null;else MAP.marks.pop();mapRender()}
+function mapToggle(){if(!YT.ready)return;const st=YT.player.getPlayerState();if(st===1)YT.player.pauseVideo();else YT.player.playVideo()}
+function mapKey(e){if(document.activeElement===$('mTitle'))return false;const k=e.key.toLowerCase();
+ if(k===' '){e.preventDefault();mapToggle();return true}if(k==='t'){mapTap();return true}
+ if(['1','2','3','4'].includes(k)){mapMark(['calm','build','big','drop'][+k-1]);return true}
+ if(k==='m'){mapMark('m');return true}if(k==='e'){mapMark('e');return true}if(k==='z'){mapUndo();return true}return false}
+$('mPlay').onclick=mapToggle;$('mTap').addEventListener('pointerdown',e=>{e.preventDefault();mapTap()});
+$('mBack5').onclick=()=>YT.ready&&YT.player.seekTo(Math.max(0,ytNow()-5),true);$('mFwd5').onclick=()=>YT.ready&&YT.player.seekTo(ytNow()+5,true);
+$('mHalf').onclick=()=>{if(MAP.bpm){MAP.bpm/=2;mapRender()}};$('mDouble').onclick=()=>{if(MAP.bpm){MAP.bpm*=2;mapRender()}};
+$('mBpmM').onclick=()=>{if(MAP.bpm){MAP.bpm-=.5;mapRender()}};$('mBpmP').onclick=()=>{if(MAP.bpm){MAP.bpm+=.5;mapRender()}};
+$('mEarly').onclick=()=>{MAP.t0-=.01;mapRender()};$('mLate').onclick=()=>{MAP.t0+=.01;mapRender()};$('mTapReset').onclick=()=>{MAP.taps=[];MAP.bpm=0;MAP.nTap=0;mapRender()};
+$('mTitle').oninput=()=>{MAP.title=$('mTitle').value};
+function mapClean(){const m={vid:MAP.vid,title:MAP.title,style:MAP.style,bpm:MAP.bpm,t0:MAP.t0,marks:MAP.marks,moments:MAP.moments,endBar:MAP.endBar};return m}
+$('mSave').onclick=()=>{if(!MAP.bpm||!MAP.marks.length){$('mMsg').textContent=L('Belum lengkap: butuh tempo (tap T) dan minimal 1 tanda bagian (1–4).','Not complete yet: needs tempo (tap T) and at least 1 section mark (1–4).');return}
+ const o=ytStore();o[MAP.vid]=mapClean();ytSave(o);const sg=ytRegister(o[MAP.vid]);try{YT.player.pauseVideo()}catch(e){}selected=sg.id;loadSong(selected);$('ytcard').style.display='none';$('menu').style.display='block';setSongsOpen(false);renderSongs()};
+$('mCode').onclick=()=>{const c=ytCode(mapClean());try{navigator.clipboard.writeText(c).then(()=>$('mMsg').textContent=L('Kode tersalin!','Code copied!'),()=>$('mMsg').textContent=c)}catch(e){$('mMsg').textContent=c}};
+$('mClose').onclick=()=>{try{YT.player.pauseVideo()}catch(e){}$('ytcard').style.display='none';$('menu').style.display='block'};
+function mapFrame(){if(!MAP||$('ytcard').style.display!=='block'||!YT.ready)return;const t=ytNow();const fmt=x=>Math.floor(x/60)+':'+String(Math.floor(x%60)).padStart(2,'0');let st=-1;try{st=YT.player.getPlayerState()}catch(e){}
+ if(MAP.bpm){const spb=60/MAP.bpm,b=(t-MAP.t0)/spb,f=b-Math.floor(b);$('mTime').textContent=`${fmt(t)} · bar ${Math.floor(b/4)} · beat ${((Math.floor(b)%4)+4)%4+1}`;$('mDot').classList.toggle('on',st===1&&f<.18);$('mDot').classList.toggle('one',((Math.floor(b)%4)+4)%4===0);
+  if($('mClick').checked&&st===1){const k=Math.ceil(b+.0001),tk=MAP.t0+k*spb;if(tk-t<.12&&MAP.lastClick!==k){MAP.lastClick=k;clickSnd(ac.currentTime+Math.max(0,tk-t),k%4===0)}}}
+ else $('mTime').textContent=fmt(t)}
+
+// ===== KELUAR / PAUSE =====
+function openQuit(){if(S.state!=='live')return;S.state='paused';if(SONG.yt){try{YT.player.pauseVideo()}catch(e){}}else ac.suspend();$('quitModal').classList.remove('hide')}
+function resumeGame(){if(S.state!=='paused')return;$('quitModal').classList.add('hide');S.state='live';if(SONG.yt){try{YT.player.playVideo()}catch(e){}}else ac.resume()}
+function endNow(){$('quitModal').classList.add('hide');S.state='menu';clearInterval(schedTimer);if(SONG.yt){try{YT.player.pauseVideo()}catch(e){}}else{ac.resume();buildBus()}$('hdr').classList.remove('live');$('count').textContent='';showMenu()}
+$('quitBtn').onclick=openQuit;$('qResume').onclick=resumeGame;$('qEnd').onclick=endNow;
 function setLang(l){LANG=l;try{localStorage.setItem('lcob-lang',l)}catch(e){}applyStatic();calLabel();if($('calib').style.display==='block')calRender();loadSong(selected);renderRoles();renderSongs();renderPads();setSongsOpen(!$('songWrap').classList.contains('collapsed'))}
 document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>setLang(b.dataset.lang));
+ytLoadApi();
 reset();applyStatic();calLabel();loadSong(selected);renderRoles();renderSongs();setSongsOpen(false);
 requestAnimationFrame(frame);
 })();
