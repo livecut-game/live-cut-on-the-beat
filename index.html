@@ -167,6 +167,23 @@ body:not(.mode-light) #pads,body:not(.mode-light) .k-light{display:none}
 .lang{position:absolute;top:18px;right:20px;display:flex;border:1px solid #3a3a44;border-radius:6px;overflow:hidden}
 .lang button{font-family:inherit;font-size:11px;font-weight:800;letter-spacing:.1em;background:transparent;color:var(--mut);border:0;padding:6px 10px;cursor:pointer}
 .lang button.on{background:var(--red);color:#fff}
+.calrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.cal-open{font-family:inherit;font-size:11px;background:transparent;border:1px solid #3a3a44;border-radius:6px;color:var(--mut);padding:9px 12px;cursor:pointer}
+.cal-open b{color:var(--txt)}.cal-open:hover{border-color:var(--amb)}
+.calbox{display:flex;align-items:center;gap:22px;margin:8px 0 16px;padding:16px;background:#141419;border:1px solid var(--line);border-radius:10px}
+.calring{width:74px;height:74px;border-radius:50%;border:3px solid #3a3a44;flex:none;transition:border-color .05s}
+.calring.hit{border-color:#fff;box-shadow:0 0 24px rgba(255,255,255,.4)}.calring.tap{background:rgba(255,43,58,.4)}
+#calStatus{font-size:18px}#calStatus b{color:var(--acc)}
+.calbtns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.btn.sm{font-size:11px;padding:8px 12px;margin-left:0!important}
+#calib .btn.ghost{margin-left:0}
+.notes{margin:0 0 16px;padding:12px 14px;background:#141419;border:1px solid var(--line);border-radius:8px}
+.notes .nh{font-size:10px;letter-spacing:.18em;color:var(--mut);margin-bottom:8px}.notes .nh b{color:var(--txt);font-size:13px;letter-spacing:0}
+.nr{display:grid;grid-template-columns:190px 1fr 34px;align-items:center;gap:10px;margin:5px 0;font-size:11px}
+.nl{font-weight:800;letter-spacing:.06em}.nl i{display:block;font-style:normal;font-weight:400;color:var(--mut);font-size:10px;letter-spacing:0}
+.nb{height:7px;background:#22222a;border-radius:4px;overflow:hidden}.nb i{display:block;height:100%}
+.nr b{text-align:right}
+@media (max-width:640px){.nr{grid-template-columns:120px 1fr 30px}}
 </style>
 </head>
 <body>
@@ -223,12 +240,20 @@ body:not(.mode-light) #pads,body:not(.mode-light) .k-light{display:none}
    <li data-en="<b>Best trick:</b> BLACKOUT 1 beat before a chorus/drop, then explode as it hits. SPOT for solos & high notes."><b>Trik paling ampuh:</b> BLACKOUT 1 ketuk sebelum chorus/drop, lalu meledak pas masuk. SPOT saat solo & nada tinggi.</li>
    <li data-en="<b>Don't:</b> hold a blackout too long (dark stage!) or strobe during a ballad (WRONG MOOD)."><b>Jangan:</b> blackout kelamaan (panggung gelap!) dan strobe di lagu ballad (SALAH MOOD).</li>
   </ul>
-    <button class="btn" id="start" data-en="▶ GO LIVE">▶ MULAI SIARAN</button>
+    <div class="calrow"><button class="btn" id="start" data-en="▶ GO LIVE">▶ MULAI SIARAN</button><button class="cal-open" id="calOpen"></button></div>
   <p class="note" data-en="Use headphones or speakers so you feel the beat. Each song is about a minute. Best played on a laptop.">Pakai headphone atau speaker biar ketukannya kerasa. Tiap lagu ± 1 menit-an. Paling enak dimainkan di laptop.</p>
+ </div>
+ <div class="card" id="calib" style="display:none">
+  <h1 style="font-size:26px" data-en="⏱ LATENCY CALIBRATION">⏱ KALIBRASI LATENCY</h1>
+  <p class="sub" data-en="Every device has its own audio delay (Bluetooth headphones can be 150–250ms late!). Tap <b>SPACE</b> (or the TAP button) exactly with each click. The first 4 clicks are warm-up.">Tiap perangkat punya delay audio sendiri (headphone Bluetooth bisa telat 150–250ms!). Tekan <b>SPASI</b> (atau tombol TAP) tepat bareng setiap bunyi klik. 4 klik pertama pemanasan.</p>
+  <div class="calbox"><div class="calring" id="calRing"></div><div class="calinfo"><div id="calStatus"></div><div id="calLive" class="note"></div></div></div>
+  <div class="calbtns"><button class="btn" id="calStart" data-en="▶ START">▶ MULAI</button><button class="btn" id="calTap">TAP</button><button class="btn ghost" id="calSave" data-en="✓ SAVE">✓ SIMPAN</button></div>
+  <div class="calbtns"><button class="btn ghost sm" id="calMinus">−10ms</button><button class="btn ghost sm" id="calPlus">+10ms</button><button class="btn ghost sm" id="calAuto" data-en="AUTO (reset)">OTOMATIS (reset)</button><button class="btn ghost sm" id="calBack" data-en="← BACK">← KEMBALI</button></div>
  </div>
  <div class="card" id="result" style="display:none">
   <div class="res-head"><div class="rank" id="rRank">A</div><div><div class="note" style="margin:0 0 6px" data-en="BROADCAST REPORT">LAPORAN SIARAN</div><div class="quip" id="rQuip"></div></div></div>
   <div class="grid" id="rGrid"></div>
+  <div class="notes" id="rNotes"></div>
   <div class="tips" id="rTips"></div>
   <button class="btn" id="again" data-en="↻ RUN IT AGAIN">↻ SIARAN ULANG</button> <button class="btn ghost" id="change" data-en="♫ CHANGE SONG">♫ GANTI LAGU</button>
  </div>
@@ -247,6 +272,7 @@ const L=(id,en)=>LANG==='en'?en:id;
 function applyStatic(){document.documentElement.lang=LANG;document.querySelectorAll('[data-en]').forEach(el=>{if(el.dataset.idv===undefined)el.dataset.idv=el.innerHTML;el.innerHTML=LANG==='en'?el.dataset.en:el.dataset.idv});document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG))}
 
 // ================= AUDIO ENGINE =================
+let USER_OFF=(()=>{try{const v=localStorage.getItem('lcob-offset');return v===null?null:+v}catch(e){return null}})();
 let ac,master,padBus,noiseBuf,lat=0,T0=0,nextStep=0,schedTimer=null;
 const mf=m=>440*Math.pow(2,(m-69)/12);
 function initAudio(){
@@ -675,7 +701,7 @@ function loadSong(id){
 
 // ================= STATE =================
 let S;
-function reset(){S={state:'menu',pgm:1,pvw:2,score:0,combo:0,maxCombo:0,hype:50,hold:0,lastCut:-99,look:'WASH',warned:false,perfect:0,good:0,off:0,haram:0,rushed:0,pref:0,cuts:0,momentsHit:0,mDone:new Set(),lastBeat:-6,ic:0,hypeSum:0,hypeN:0,missed:[]}}
+function reset(){S={state:'menu',pgm:1,pvw:2,score:0,combo:0,maxCombo:0,hype:50,hold:0,lastCut:-99,look:'WASH',warned:false,perfect:0,good:0,off:0,haram:0,rushed:0,pref:0,cuts:0,momentsHit:0,mDone:new Set(),lastBeat:-6,ic:0,hypeSum:0,hypeN:0,missed:[],validCuts:0,overBeats:0,jitter:0,pingpong:0,lastPP:-9,prepared:0,secCams:{},camHist:[]}}
 const songBeat=()=>(ac.currentTime-lat-T0)/SPB;
 const visBeat=()=>(S.state==='live'||S.state==='end')&&ac?songBeat():performance.now()/1000/SPB;
 const addHype=v=>{S.hype=Math.max(0,Math.min(100,S.hype+v))};
@@ -694,13 +720,14 @@ function take(){
  if(S.pvw===S.pgm){pop(L('SUDAH DI PROGRAM','ALREADY ON AIR'),'mut',L('pilih kamera lain dulu','pick another camera first'));return}
  const nb=Math.round(b),dms=(b-nb)*SPB*1000,ad=Math.abs(dms);
  const sec=sectionAt(b),held=b-S.lastCut;
- const cam=S.pvw;S.pvw=S.pgm;S.pgm=cam;S.hold=0;S.warned=false;S.cuts++;S.lastCut=b;
+ if(!sec.minHold&&kindOf(sec)==='calm'&&held<1.5&&b>0&&S.lastCut>0)S.jitter++;
+ const cam=S.pvw;S.pvw=S.pgm;S.pgm=cam;S.hold=0;S.warned=false;S.cuts++;S.lastCut=b;trackCut(MODE==='light'?S.look:S.pgm,b);
  if(isRepo(cam,b)){S.haram++;S.combo=0;addHype(-12);S.score=Math.max(0,S.score-150);flashRed();pop(L('CUT HARAM!','FORBIDDEN CUT!'),'red',L(`CAM ${cam} lagi reposisi`,`CAM ${cam} is repositioning`));return}
  let grade,pts;
  if(ad<=70){grade='PERFECT';pts=100;S.perfect++}else if(ad<=140){grade='GOOD';pts=60;S.good++}else{S.off++;S.combo=0;addHype(-5);pop('OFF-BEAT','amb',`${dms>0?L('telat ','late '):L('kecepetan ','early ')}${Math.round(ad)}ms`);return}
  if(sec.minHold&&held<sec.minHold-.5&&b>0){S.rushed++;S.combo=0;addHype(-6);pop(L('BURU-BURU!','TOO RUSHED!'),'amb',L(`baru ${Math.max(0,Math.round(held))} ketuk, tahan minimal ${sec.minHold}`,`only ${Math.max(0,Math.round(held))} beats, hold at least ${sec.minHold}`));return}
  S.combo++;S.maxCombo=Math.max(S.maxCombo,S.combo);
- const fit=sec.pref.includes(cam);if(fit)S.pref++;
+ const fit=sec.pref.includes(cam);if(fit)S.pref++;S.validCuts++;
  const mult=Math.min(4,1+Math.floor(S.combo/5)*.5);
  S.score+=Math.round((pts+(fit?40:0))*mult*(SONG.style==='ballad'?1.6:1));
  addHype((grade==='PERFECT'?5:3)+(SONG.style==='ballad'?3:0)-(fit?0:4));
@@ -711,25 +738,31 @@ function lightPress(look){
  if(S.state!=='live')return;const b=songBeat();if(b<-.5)return;
  if(look===S.look){pop(L('SUDAH NYALA','ALREADY ON'),'mut',look);return}
  const nb=Math.round(b),dms=(b-nb)*SPB*1000,ad=Math.abs(dms),sec=sectionAt(b);
- S.look=look;S.hold=0;S.warned=false;S.cuts++;S.lastCut=b;
+ S.look=look;S.hold=0;S.warned=false;S.cuts++;S.lastCut=b;trackCut(MODE==='light'?S.look:S.pgm,b);
  if(look==='STROBE'&&!strobeOK(sec)){S.haram++;S.combo=0;addHype(-12);S.score=Math.max(0,S.score-150);flashRed();pop(L('SALAH MOOD!','WRONG MOOD!'),'red',L('strobe di ballad?? penonton lagi mewek','strobe in a ballad?? people are crying'));return}
  let grade,pts;
  if(ad<=70){grade='PERFECT';pts=100;S.perfect++}else if(ad<=140){grade='GOOD';pts=60;S.good++}else{S.off++;S.combo=0;addHype(-5);pop('OFF-BEAT','amb',`${dms>0?L('telat ','late '):L('kecepetan ','early ')}${Math.round(ad)}ms`);return}
  S.combo++;S.maxCombo=Math.max(S.maxCombo,S.combo);
- const fit=lightPrefs(sec).includes(look)||MOMENTS.some(m=>m.beat===nb&&m.looks.includes(look));if(fit)S.pref++;
+ const fit=lightPrefs(sec).includes(look)||MOMENTS.some(m=>m.beat===nb&&m.looks.includes(look));if(fit)S.pref++;S.validCuts++;
  const mult=Math.min(4,1+Math.floor(S.combo/5)*.5);
  S.score+=Math.round((pts+(fit?40:0))*mult);addHype((grade==='PERFECT'?5:3)-(fit?0:4));
  pop(grade+(mult>1?` ×${mult}`:''),grade==='PERFECT'?'grn':'wht',`${look} · ${dms>=0?'+':''}${Math.round(dms)}ms${fit?'':L(' · kurang cocok buat ',' · wrong look for ')+tr(sec.name)}`);
+}
+function trackCut(x,b){
+ S.camHist.push(x);const sn=sectionAt(b).name;(S.secCams[sn]||(S.secCams[sn]=new Set())).add(x);
+ if(MODE==='switch'&&S.camHist.length>=4&&S.camHist.length-S.lastPP>=4){const h=S.camHist.slice(-4);if(new Set(h).size===2&&h[0]===h[2]&&h[1]===h[3]){S.pingpong++;S.lastPP=S.camHist.length;setTimeout(()=>pop('PING-PONG!','amb',L(`cuma bolak-balik CAM ${h[0]} & ${h[1]}, variasiin!`,`just bouncing CAM ${h[0]} & ${h[1]}, mix it up!`)),450)}}
 }
 function onBeat(n){
  while(ICOM[S.ic]&&ICOM[S.ic].beat<=n){intercom(ICOM[S.ic]);S.ic++}
  if(n<0){if(n<-4)return;$('count').textContent=n===-1?'LIVE':String(-n-1);hat(ac.currentTime,.12);return}
  if(n===0)$('count').textContent='';
  S.hold++;S.hypeSum+=S.hype;S.hypeN++;
+ {const sc=SECTIONS.find(x=>x.from*4===n);if(sc)(S.secCams[sc.name]||(S.secCams[sc.name]=new Set())).add(MODE==='light'?S.look:S.pgm)}
+ if(MODE==='switch')MOMENTS.forEach(m=>{if(m.beat-1===n&&(S.pvw===m.cam||S.pgm===m.cam))S.prepared++});
  const sec=sectionAt(n);
  const exempt=MOMENTS.some(m=>m.hold&&n>=m.beat&&n<m.beat+m.hold&&(MODE==='light'?m.looks.includes(S.look):S.pgm===m.cam));
- if(MODE==='light'&&S.look==='BLACKOUT'&&S.hold>2){addHype(-4);if(!S.warned){S.warned=true;pop(L('PANGGUNG GELAP!','STAGE IS DARK!'),'red',L('kelamaan blackout, nyalain lagi!','blackout too long, bring it back!'))}}
- else if(S.hold>(MODE==='light'?Math.ceil(sec.maxHold*1.5):sec.maxHold)&&!exempt){addHype(-2.5);if(!S.warned){S.warned=true;pop(L('KELAMAAN!','TOO LONG!'),'amb',L('penonton mulai bosen, cut!','crowd is getting bored, cut!'))}}
+ if(MODE==='light'&&S.look==='BLACKOUT'&&S.hold>2){addHype(-4);S.overBeats++;if(!S.warned){S.warned=true;pop(L('PANGGUNG GELAP!','STAGE IS DARK!'),'red',L('kelamaan blackout, nyalain lagi!','blackout too long, bring it back!'))}}
+ else if(S.hold>(MODE==='light'?Math.ceil(sec.maxHold*1.5):sec.maxHold)&&!exempt){addHype(-2.5);S.overBeats++;if(!S.warned){S.warned=true;pop(L('KELAMAAN!','TOO LONG!'),'amb',L('penonton mulai bosen, cut!','crowd is getting bored, cut!'))}}
 }
 function checkMoments(b){
  for(const m of MOMENTS){if(S.mDone.has(m.beat)||b<m.beat+.35)continue;S.mDone.add(m.beat);
@@ -737,7 +770,7 @@ function checkMoments(b){
   else{S.missed.push(tr(m.short));addHype(-10);pop(L('MOMEN LEWAT','MOMENT MISSED'),'red',tr(m.short)+L(' harusnya ',' needed ')+(m.cam?'CAM '+m.cam:m.looks.join('/')))}}
 }
 function start(){
- initAudio();ac.resume();lat=(ac.outputLatency||0)+(ac.baseLatency||0);
+ initAudio();ac.resume();lat=USER_OFF!==null?USER_OFF/1000:(ac.outputLatency||0)+(ac.baseLatency||0);
  reset();S.state='live';$('log').innerHTML='';$('count').textContent='';
  T0=ac.currentTime+.4+4*SPB;nextStep=0;
  clearInterval(schedTimer);schedTimer=setInterval(schedule,25);
@@ -748,8 +781,19 @@ function endGame(){
  S.state='end';clearInterval(schedTimer);$('hdr').classList.remove('live');
  const cuts=S.cuts||1,acc=(S.perfect+S.good*.6)/cuts,mom=S.momentsHit/MOMENTS.length,hy=S.hypeN?S.hypeSum/S.hypeN:0;
  const minCuts=SONG.style==='ballad'?(MODE==='light'?5:6):(MODE==='light'?8:10);
- let q=acc*.45+mom*.3+(hy/100)*.25-S.haram*.07-S.rushed*.04;if(S.cuts<minCuts)q=Math.min(q,.3);
- const rank=q>=.85?'S':q>=.72?'A':q>=.58?'B':q>=.42?'C':'D';
+ const judged=S.perfect+S.good+S.off,cl=v=>Math.max(0,Math.min(100,Math.round(v)));
+ const scTiming=cl(judged?(S.perfect+S.good*.6)/judged*100:0);
+ const scMom=cl(mom*100);
+ const scShot=cl(S.validCuts?S.pref/S.validCuts*100:0);
+ const scRitme=cl(100-S.overBeats*3-S.rushed*10-S.jitter*4);
+ const vs=SECTIONS.map(x=>{const k=kindOf(x),tgt=(k==='big'||k==='drop')?3:2,n=(S.secCams[x.name]||new Set()).size;return Math.min(1,n/tgt)});
+ const scVar=cl(vs.reduce((a,b)=>a+b,0)/vs.length*100-S.pingpong*12);
+ const scAnt=cl(MOMENTS.length?S.prepared/MOMENTS.length*100:0);
+ const cats=MODE==='switch'?[['TIMING',scTiming,.3,L('cut jatuh di ketukan','cuts landing on the beat')],[L('MOMEN','MOMENTS'),scMom,.2,L('momen wajib ketangkep','must-catch moments caught')],[L('PILIHAN SHOT','SHOT CHOICE'),scShot,.15,L('shot cocok sama bagian lagu','shots that fit the section')],[L('RITME','PACING'),scRitme,.15,L('nggak kelamaan, nggak buru-buru','not too long, not rushed')],[L('VARIASI','VARIETY'),scVar,.1,L('pakai banyak kamera, anti ping-pong','use many cams, no ping-pong')],[L('ANTISIPASI','ANTICIPATION'),scAnt,.1,L('kamera sudah di preview sebelum momen','camera in preview before the moment')]]
+  :[['TIMING',scTiming,.35,L('look jatuh di ketukan','looks landing on the beat')],[L('MOMEN','MOMENTS'),scMom,.25,L('blackout, spot & hit ketangkep','blackouts, spots & hits caught')],[L('PILIHAN LOOK','LOOK CHOICE'),scShot,.15,L('look cocok sama bagian lagu','looks that fit the section')],[L('RITME','PACING'),scRitme,.15,L('nggak kelamaan di satu look','not stuck on one look')],[L('VARIASI','VARIETY'),scVar,.1,L('pakai banyak look','use many looks')]];
+ let q=cats.reduce((a,c)=>a+c[1]*c[2],0)-S.haram*8;if(S.cuts<minCuts)q=Math.min(q,30);q=cl(q);
+ const rank=q>=88?'S':q>=75?'A':q>=60?'B':q>=45?'C':'D';
+ S.cats=cats;S.q=q;
  const quips=LANG==='en'?{S:'Who is this director? Hire them for the national tour.',A:'Clean. Client smiles, EP relaxed, crew eats dinner in peace.',B:'Solid, but a few moments slipped. One more run and you level up.',C:'The crowd had fun, but the OB van was a little tense.',D:'Hmm… tomorrow you shadow a senior first.'}:{S:'Director-nya siapa nih? Langsung rekrut buat tur nasional.',A:'Rapi. Klien senyum, EP tenang, crew bisa makan nasi kotak dengan damai.',B:'Aman, tapi masih ada momen yang lolos. Sekali lagi pasti naik.',C:'Penonton sih seneng, tapi suasana di OB van agak tegang.',D:'Hmm… besok shadowing dulu ya sama switcher senior.'};
  const prevBest=best(SONG.id);saveBest(SONG.id,S.score);
  $('rRank').textContent=rank;
@@ -757,6 +801,7 @@ function endGame(){
  const avg=(BEATS*SPB/(S.cuts+1)).toFixed(1);
  const cells=[[L('SKOR','SCORE'),S.score],['MAX COMBO',S.maxCombo],[L('MOMEN','MOMENTS'),`${S.momentsHit}/${MOMENTS.length}`],[MODE==='light'?L('SALAH MOOD','WRONG MOOD'):L('CUT HARAM','FORBIDDEN CUTS'),S.haram],['PERFECT',S.perfect],['GOOD',S.good],[SONG.style==='ballad'?L('BURU-BURU','RUSHED'):'OFF-BEAT',SONG.style==='ballad'?S.rushed:S.off],[MODE==='light'?L('RATA² LOOK','AVG LOOK'):L('RATA² SHOT','AVG SHOT'),avg+'s']];
  $('rGrid').innerHTML=cells.map(c=>`<div><small>${c[0]}</small><b>${c[1]}</b></div>`).join('');
+ $('rNotes').innerHTML=`<div class="nh">${L("DIRECTOR'S NOTES","DIRECTOR'S NOTES")} · <b>${q}/100</b></div>`+cats.map(c=>`<div class="nr"><span class="nl">${c[0]}<i>${c[3]}</i></span><span class="nb"><i style="width:${c[1]}%;background:${c[1]>=80?'var(--grn)':c[1]>=55?'var(--amb)':'var(--red)'}"></i></span><b>${c[1]}</b></div>`).join('');
  const tips=[];
  if(S.off>S.perfect)tips.push(SONG.style==='koplo'?L('<b>Timing:</b> jangan ngikutin "tak" kendang yang ganjil, kuncinya di "DUNG" dan kick. Cut-nya di ketukan utama, bukan di hiasan kendangnya.','<b>Timing:</b> don\'t chase the off-beat kendang "tak". Lock to the "DUNG" and the kick. Cut on the main beat, not the ornaments.'):L('<b>Timing:</b> cut-mu lebih sering meleset dari ketukan. Tekan TAKE <i>bareng</i> kick, jangan nunggu kick-nya kedengeran dulu. Switcher yang bagus itu antisipasi, bukan reaksi.','<b>Timing:</b> most of your cuts missed the beat. Hit TAKE <i>with</i> the kick, don\'t wait to hear it. Great switchers anticipate, they don\'t react.'));
  if(S.rushed)tips.push(L(`<b>Buru-buru:</b> ${S.rushed}× cut sebelum shot sempat bernapas. Di ballad, yang bikin penonton nangis justru shot yang ditahan.`,`<b>Rushed:</b> ${S.rushed}× you cut before the shot could breathe. In a ballad, the held shot is what makes people cry.`));
@@ -764,11 +809,14 @@ function endGame(){
  if(S.haram&&MODE==='light')tips.push(L('<b>Salah mood:</b> strobe di lagu ballad itu dosa besar. Lighting ikut emosi lagu, bukan cuma ketukannya.','<b>Wrong mood:</b> strobe in a ballad is a cardinal sin. Lighting follows the emotion, not just the beat.'));
  else if(S.haram)tips.push(L('<b>Cut haram:</b> lihat label MOVING sebelum TAKE. Di siaran beneran, ini yang bikin kamu dipanggil EP setelah show.','<b>Forbidden cuts:</b> check for the MOVING label before TAKE. In a real broadcast, this gets you called in by the EP after the show.'));
  if(S.cuts&&S.pref/S.cuts<.5)tips.push(L('<b>Pilihan shot:</b> banyak shot yang nggak cocok sama bagian lagunya. Cek rundown di kanan.','<b>Shot choice:</b> many shots didn\'t fit the song section. Check the rundown on the right.'));
+ if(S.jitter>=3)tips.push(L(`<b>Ritme:</b> ${S.jitter}× cut terlalu rapat di bagian yang tenang. Bagian pelan butuh shot yang lebih lama, simpan cut cepat buat bagian yang ramai.`,`<b>Pacing:</b> ${S.jitter}× you cut too fast in a calm section. Quiet parts need longer shots; save fast cuts for the big moments.`));
+ if(S.pingpong)tips.push(L(`<b>Variasi:</b> ${S.pingpong}× kamu cuma bolak-balik dua kamera. Penonton TV ngerasa itu malas. Pakai kamera ketiga buat "napas".`,`<b>Variety:</b> ${S.pingpong}× you just bounced between two cameras. Viewers read that as lazy. Use a third camera to breathe.`));
+ if(MODE==='switch'&&MOMENTS.length&&S.prepared<MOMENTS.length)tips.push(L(`<b>Antisipasi:</b> cuma ${S.prepared}/${MOMENTS.length} momen yang kameranya sudah siap di preview sebelum terjadi. Director yang bagus sudah "ready" sebelum diminta.`,`<b>Anticipation:</b> only ${S.prepared}/${MOMENTS.length} moments had their camera ready in preview beforehand. Good directors are ready before they're asked.`));
  if(!tips.length)tips.push(L('<b>Catatan:</b> bersih. Next level: coba lagu lain, aturan mainnya beda.','<b>Notes:</b> clean run. Next level: try another song, the rules change.'));
  $('rTips').innerHTML=tips.join('<br><br>');
  $('menu').style.display='none';$('result').style.display='block';$('overlay').classList.remove('hide');
 }
-function showMenu(){S.state='menu';renderRoles();renderSongs();$('result').style.display='none';$('menu').style.display='block';$('overlay').classList.remove('hide')}
+function showMenu(){S.state='menu';$('calib').style.display='none';renderRoles();renderSongs();$('result').style.display='none';$('menu').style.display='block';$('overlay').classList.remove('hide')}
 let selected='koplo';
 function setSongsOpen(v){$('songWrap').classList.toggle('collapsed',!v);$('songChev').textContent=v?L('TUTUP ▴','CLOSE ▴'):L('GANTI LAGU ▾','CHANGE SONG ▾')}
 $('songToggle').onclick=()=>setSongsOpen($('songWrap').classList.contains('collapsed'));
@@ -785,7 +833,7 @@ function renderSongs(){
 $('start').onclick=start;$('again').onclick=start;$('change').onclick=showMenu;
 $('take').addEventListener('pointerdown',e=>{e.preventDefault();take()});
 addEventListener('keydown',e=>{
- if(e.repeat)return;const k=e.key;
+ if(e.repeat)return;const k=e.key;if(CAL.on&&(k===' '||k==='Enter')){e.preventDefault();calTap();return}if($('calib').style.display==='block'&&(k===' '||k==='Enter')){e.preventDefault();return}
  if(MODE==='light'){const i=+k-1;if(i>=0&&i<5){lightPress(LOOKS[i]);e.preventDefault();return}if(k==='b'||k==='B'){lightPress('BLACKOUT');return}}
  if(MODE==='switch'&&k>='1'&&k<='4'){S.pvw=+k;e.preventDefault()}
  else if(k===' '||k==='Enter'){e.preventDefault();if(S.state==='live'){if(MODE==='switch')take()}else if(!$('overlay').classList.contains('hide'))start()}
@@ -943,9 +991,29 @@ function frame(){
  $('mPvw').classList.toggle('repo',live&&isRepo(S.pvw,b));
  drawTo($('cPgm'),S.pgm,t,b);drawTo($('cPvw'),S.pvw,t,b);camCanvases.forEach((cv,i)=>drawTo(cv,i+1,t,b));
 }
-function setLang(l){LANG=l;try{localStorage.setItem('lcob-lang',l)}catch(e){}applyStatic();loadSong(selected);renderRoles();renderSongs();renderPads();setSongsOpen(!$('songWrap').classList.contains('collapsed'))}
+// ===== KALIBRASI =====
+const CAL={on:false,clicks:[],taps:[],t0:0,spb:.6,n:20,res:null,raf:0};
+function calLabel(){$('calOpen').innerHTML=`⏱ ${L('Kalibrasi','Calibration')}: <b>${USER_OFF===null?L('otomatis','auto'):(USER_OFF>0?'+':'')+USER_OFF+' ms'}</b>`}
+function calShow(){$('menu').style.display='none';$('result').style.display='none';$('calib').style.display='block';CAL.res=USER_OFF;calRender()}
+function calRender(){const v=CAL.res;$('calStatus').innerHTML=v===null?L('Offset: <b>otomatis</b> (perkiraan browser)','Offset: <b>auto</b> (browser estimate)'):`Offset: <b>${v>0?'+':''}${v} ms</b>`+(v>120?`<div class="note" style="color:var(--amb)">${L('Cukup besar, sepertinya kamu pakai headphone Bluetooth.','Pretty big, looks like Bluetooth headphones.')}</div>`:'')}
+function clickSnd(t,acc){const o=osc('square',acc?1600:1100),g=ac.createGain();env(g,t,.001,acc?.25:.16,.05);o.connect(g).connect(master);o.start(t);o.stop(t+.08)}
+function calStart(){initAudio();ac.resume();CAL.on=true;CAL.taps=[];CAL.clicks=[];CAL.t0=ac.currentTime+.6;for(let i=0;i<CAL.n;i++){const t=CAL.t0+i*CAL.spb;CAL.clicks.push(t);clickSnd(t,i%4===0)}
+ $('calLive').textContent=L('Dengarkan… tap bareng klik.','Listen… tap with the click.');cancelAnimationFrame(CAL.raf);
+ const loop=()=>{const est=(ac.outputLatency||0)+(ac.baseLatency||0);const ph=((ac.currentTime-est-CAL.t0)/CAL.spb);const f=ph-Math.floor(ph);$('calRing').style.transform=`scale(${ph>=0&&ph<CAL.n?1+.35*Math.exp(-f*6):1})`;$('calRing').classList.toggle('hit',ph>=0&&ph<CAL.n&&f<.15);
+  if(ac.currentTime>CAL.clicks[CAL.n-1]+.7){calFinish();return}CAL.raf=requestAnimationFrame(loop)};loop()}
+function calTap(){if(!CAL.on)return;const t=ac.currentTime;let bi=0,bd=9;CAL.clicks.forEach((c,i)=>{const d=t-c;if(Math.abs(d)<Math.abs(bd)){bd=d;bi=i}});
+ if(bi>=4&&Math.abs(bd)<.35)CAL.taps.push(bd*1000);$('calLive').textContent=`${L('Tap valid','Valid taps')}: ${CAL.taps.length} · ${L('terakhir','last')}: ${bi>=4?Math.round(bd*1000)+' ms':L('pemanasan','warm-up')}`;
+ $('calRing').classList.add('tap');setTimeout(()=>$('calRing').classList.remove('tap'),80)}
+function calFinish(){CAL.on=false;const a=[...CAL.taps].sort((x,y)=>x-y);if(a.length<8){$('calLive').textContent=L('Tap-nya kurang (minimal 8 yang valid). Coba lagi.','Not enough taps (need 8 valid). Try again.');return}
+ const med=a[Math.floor(a.length/2)],mad=[...a.map(x=>Math.abs(x-med))].sort((x,y)=>x-y)[Math.floor(a.length/2)];CAL.res=Math.round(med);calRender();
+ $('calLive').innerHTML=`${L('Konsistensi','Consistency')}: ±${Math.round(mad)} ms ${mad<25?L('· mantap','· great'):mad<45?L('· oke','· ok'):L('· kurang stabil, coba ulang','· shaky, try again')}. ${L('Tekan SIMPAN kalau sudah pas.','Press SAVE if it looks right.')}`}
+$('calOpen').onclick=calShow;$('calStart').onclick=calStart;$('calTap').addEventListener('pointerdown',e=>{e.preventDefault();calTap()});
+$('calSave').onclick=()=>{USER_OFF=CAL.res;try{USER_OFF===null?localStorage.removeItem('lcob-offset'):localStorage.setItem('lcob-offset',USER_OFF)}catch(e){}calLabel();$('calib').style.display='none';$('menu').style.display='block'};
+$('calMinus').onclick=()=>{CAL.res=(CAL.res??0)-10;calRender()};$('calPlus').onclick=()=>{CAL.res=(CAL.res??0)+10;calRender()};$('calAuto').onclick=()=>{CAL.res=null;calRender()};
+$('calBack').onclick=()=>{CAL.on=false;$('calib').style.display='none';$('menu').style.display='block'};
+function setLang(l){LANG=l;try{localStorage.setItem('lcob-lang',l)}catch(e){}applyStatic();calLabel();if($('calib').style.display==='block')calRender();loadSong(selected);renderRoles();renderSongs();renderPads();setSongsOpen(!$('songWrap').classList.contains('collapsed'))}
 document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>setLang(b.dataset.lang));
-reset();applyStatic();loadSong(selected);renderRoles();renderSongs();setSongsOpen(false);
+reset();applyStatic();calLabel();loadSong(selected);renderRoles();renderSongs();setSongsOpen(false);
 requestAnimationFrame(frame);
 })();
 
