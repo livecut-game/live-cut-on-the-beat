@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LIVE: Cut on the Beat</title>
+<style>
+:root{--bg:#060608;--panel:#0e0e12;--line:#22222a;--txt:#ecebe6;--mut:#7d7b86;--red:#ff2b3a;--grn:#26f28a;--amb:#ffb21e;--acc:#ff4fd8}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;overflow:hidden;-webkit-user-select:none;user-select:none}
+#app{display:grid;grid-template-columns:minmax(0,1fr) 250px;grid-template-rows:auto minmax(0,1fr) auto;gap:10px;height:100%;padding:10px}
+header{grid-column:1/3;display:flex;align-items:center;gap:22px;padding:8px 14px;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+.brand{font-weight:800;letter-spacing:.08em;font-size:14px;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.brand b{color:var(--acc)}
+.rec{width:10px;height:10px;border-radius:50%;background:#444}
+.live .rec{background:var(--red);box-shadow:0 0 10px var(--red);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.35}}
+.stat{display:flex;flex-direction:column;line-height:1.1}
+.stat small,.hype small{font-size:9px;color:var(--mut);letter-spacing:.15em}
+.stat span{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+#combo.hot{color:var(--acc)}
+.hype{flex:1;min-width:120px}
+.bar{height:8px;background:#1a1a20;border-radius:4px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;width:50%;background:linear-gradient(90deg,var(--amb),var(--acc));transition:width .2s}
+main{min-height:0;display:flex;align-items:flex-start;justify-content:center;overflow:auto}
+.stage{width:min(100%,calc((100vh - 170px)/.54));display:flex;flex-direction:column;gap:8px}
+.top{display:grid;grid-template-columns:2fr 1fr;gap:8px;align-items:start}
+.cams{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mon{position:relative;aspect-ratio:16/9;background:#000;border:2px solid #1c1c22;border-radius:4px;overflow:hidden}
+.mon canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.lbl{position:absolute;left:0;bottom:0;padding:3px 7px;font-size:10px;font-weight:700;letter-spacing:.1em;background:rgba(0,0,0,.72)}
+.lbl.red{background:var(--red);color:#fff}.lbl.grn{background:var(--grn);color:#000}
+.pgm{border-color:var(--red)}.pvw{border-color:var(--grn)}
+.cam{cursor:pointer;transition:border-color .1s}
+.cam.is-pgm{border-color:var(--red)}.cam.is-pvw{border-color:var(--grn)}
+.cam.is-pgm .lbl{background:var(--red);color:#fff}.cam.is-pvw .lbl{background:var(--grn);color:#000}
+.mv{position:absolute;top:5px;right:5px;font-size:9px;font-weight:800;padding:2px 5px;background:var(--amb);color:#000;letter-spacing:.1em;display:none}
+.mon.repo .mv{display:block}
+.side-r .preview-note{display:none}
+#judge{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.pop{position:absolute;text-align:center;animation:pop .9s ease-out forwards;text-shadow:0 2px 12px rgba(0,0,0,.9)}
+.pop b{display:block;font-size:clamp(18px,3.2vw,38px);font-weight:900;letter-spacing:.06em}
+.pop span{font-size:clamp(10px,1.1vw,13px);opacity:.85}
+.pop.grn b{color:var(--grn)}.pop.red b{color:var(--red)}.pop.amb b{color:var(--amb)}.pop.wht b{color:#fff}.pop.mut b{color:var(--mut)}.pop.acc b{color:var(--acc)}
+@keyframes pop{0%{transform:scale(.6);opacity:0}15%{transform:scale(1.08);opacity:1}30%{transform:scale(1)}100%{transform:translateY(-30px);opacity:0}}
+#count{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(40px,8vw,110px);font-weight:900;color:#fff;text-shadow:0 0 30px var(--red);pointer-events:none}
+#flash{position:absolute;inset:0;background:var(--red);opacity:0;pointer-events:none;transition:opacity .35s}
+#ticker{display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--panel);border:1px solid var(--line);border-radius:6px;font-size:12px;min-height:34px}
+#ticker .tag{font-size:9px;letter-spacing:.15em;color:var(--mut);white-space:nowrap}
+#ticker #icText{transition:color .2s}
+#ticker.t-warn #icText{color:var(--amb)}#ticker.t-moment #icText{color:var(--acc)}#ticker.t-ok #icText{color:var(--grn)}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;display:flex;flex-direction:column;gap:14px;min-height:0}
+aside h3{font-size:10px;letter-spacing:.18em;color:var(--mut);margin-bottom:6px}
+.rd{display:flex;flex-direction:column;gap:4px}
+.rd div{padding:6px 8px;border-left:3px solid #2a2a33;font-size:11px;color:var(--mut)}
+.rd div b{display:block;color:var(--txt);font-size:12px}
+.rd div.on{border-color:var(--red);background:#1a0d10;color:var(--txt)}
+.rd div.done{opacity:.4}
+#log{display:flex;flex-direction:column;gap:5px;font-size:11px}
+#log p{color:var(--mut);line-height:1.35}
+#log p.warn{color:var(--amb)}#log p.moment{color:var(--acc)}#log p.ok{color:var(--grn)}
+#log p:first-child{color:var(--txt)}
+footer{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:8px 14px;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+.keys{font-size:11px;color:var(--mut);flex:1}
+.keys kbd{display:inline-block;padding:1px 6px;border:1px solid #3a3a44;border-bottom-width:2px;border-radius:3px;color:var(--txt);font-family:inherit;font-size:11px;margin:0 2px}
+.beats{display:flex;gap:5px}
+.beats i{width:16px;height:16px;border-radius:3px;background:#1d1d24;transition:background .05s}
+.beats i.on{background:#fff;box-shadow:0 0 10px #fff}
+.beats i.on.one{background:var(--red);box-shadow:0 0 12px var(--red)}
+#next{font-size:11px;color:var(--mut);min-width:150px;text-align:right}
+#take{font-family:inherit;font-weight:900;letter-spacing:.15em;font-size:16px;padding:12px 30px;border:none;border-radius:6px;background:var(--red);color:#fff;cursor:pointer;box-shadow:0 4px 0 #8a0f18}
+#take:active,#take.press{transform:translateY(3px);box-shadow:0 1px 0 #8a0f18}
+#overlay{position:fixed;inset:0;background:rgba(4,4,6,.86);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;z-index:10;overflow:auto}
+#overlay.hide{display:none}
+.card{max-width:720px;width:100%;background:#0d0d11;border:1px solid var(--line);border-radius:12px;padding:28px}
+.card h1{font-size:clamp(26px,5vw,44px);font-weight:900;letter-spacing:.02em;line-height:1}
+.card h1 em{font-style:normal;color:var(--red)}
+.card .sub{color:var(--mut);margin:10px 0 18px;font-size:13px;line-height:1.5}
+.card ul{list-style:none;display:grid;gap:8px;font-size:12.5px;line-height:1.45;margin-bottom:20px}
+.card li{padding-left:16px;position:relative}
+.card li:before{content:"";position:absolute;left:0;top:7px;width:7px;height:7px;background:var(--red)}
+.btn{font-family:inherit;font-weight:900;letter-spacing:.15em;font-size:15px;padding:14px 26px;border:none;border-radius:6px;background:var(--red);color:#fff;cursor:pointer;box-shadow:0 4px 0 #8a0f18}
+.btn:hover{filter:brightness(1.1)}
+.note{font-size:11px;color:var(--mut);margin-top:14px}
+.rank{font-size:96px;font-weight:900;line-height:.9;color:var(--acc);text-shadow:0 0 40px rgba(255,79,216,.5)}
+.res-head{display:flex;gap:22px;align-items:center;margin-bottom:16px}
+.quip{font-size:15px;line-height:1.4}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+.grid div{background:#141419;border:1px solid var(--line);border-radius:6px;padding:10px}
+.grid small{display:block;font-size:9px;letter-spacing:.14em;color:var(--mut)}
+.grid b{font-size:20px}
+.tips{font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:18px}
+.tips b{color:var(--txt)}
+@media (max-width:860px){
+ #app{grid-template-columns:1fr;grid-template-rows:auto auto auto auto;overflow:auto;height:auto;min-height:100%}
+ html,body{overflow:auto}
+ header{grid-column:1;flex-wrap:wrap;gap:12px}
+ aside{max-height:none}
+ footer{grid-column:1;flex-wrap:wrap;position:sticky;bottom:0;z-index:5}
+ .stage{width:100%}
+ .grid{grid-template-columns:repeat(2,1fr)}
+ #take{flex:1;padding:16px}
+}
+.songs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
+.song{font-family:inherit;text-align:left;background:#141419;border:1px solid var(--line);border-radius:8px;padding:12px;color:var(--txt);cursor:pointer;display:flex;flex-direction:column;gap:5px;transition:border-color .15s,background .15s}
+.song:hover{border-color:#4a4a55}
+.song.sel{border-color:var(--red);background:#1c0f12;box-shadow:0 0 0 1px var(--red)}
+.song .g{font-size:9px;letter-spacing:.14em;color:var(--acc)}
+.song b{font-size:16px}
+.song .tr{font-size:11px;color:var(--mut);line-height:1.4}
+.song .meta{font-size:10px;color:var(--amb);margin-top:auto}
+.btn.ghost{background:#1d1d24;box-shadow:0 4px 0 #0a0a0d;margin-left:8px}
+@media (max-width:640px){.songs{grid-template-columns:1fr}}
+.step{font-size:10px;letter-spacing:.18em;color:var(--mut);margin:0 0 8px}
+.roles{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+.role{font-family:inherit;text-align:left;background:#141419;border:1px solid var(--line);border-radius:8px;padding:10px;color:var(--txt);cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.role .ic{font-size:20px}.role b{font-size:13px}.role .tr{font-size:10.5px;color:var(--mut);line-height:1.35}.role .meta{font-size:9px;letter-spacing:.14em;color:var(--amb);margin-top:auto}
+.role.sel{border-color:var(--red);background:#1c0f12;box-shadow:0 0 0 1px var(--red)}
+.role.soon{opacity:.45;cursor:not-allowed}
+.pads{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.pad{font-family:inherit;position:relative;background:#121217;border:1px solid var(--line);border-radius:8px;padding:14px 10px;color:var(--txt);cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-height:96px;transition:background .08s,box-shadow .08s,border-color .08s}
+.pad kbd{font-family:inherit;font-size:10px;border:1px solid #3a3a44;border-radius:3px;padding:0 5px;color:var(--mut)}
+.pad b{font-size:15px;letter-spacing:.08em}.pad span{font-size:10.5px;color:var(--mut)}
+.pad[data-look=WASH]{--pc:#ff6a3c}.pad[data-look=BEAMS]{--pc:#3cc8ff}.pad[data-look=STROBE]{--pc:#ffffff}.pad[data-look=SPOT]{--pc:#ffd98a}.pad[data-look=BLACKOUT]{--pc:#ff2b3a}
+.pad b{color:var(--pc)}
+.pad.on{border-color:var(--pc);box-shadow:0 0 0 1px var(--pc),0 0 24px -4px var(--pc);background:#1a1a22}
+.pad.press{transform:translateY(2px)}
+body.mode-light #cams,body.mode-light #take,body.mode-light .k-switch{display:none}
+body:not(.mode-light) #pads,body:not(.mode-light) .k-light{display:none}
+@media (max-width:860px){.roles{grid-template-columns:repeat(2,1fr)}.pads{grid-template-columns:repeat(3,1fr)}}
+.songs{grid-template-columns:repeat(3,1fr)!important;align-items:start}
+.gcol{display:flex;flex-direction:column;gap:6px}
+.gh{font-size:10px;letter-spacing:.2em;color:var(--txt);font-weight:800;padding:2px 2px 4px;border-bottom:1px solid var(--line);margin-bottom:2px}
+.song{padding:10px!important;gap:3px!important}.song b{font-size:14px!important}.song .tr{font-size:10.5px!important}
+</style>
+</head>
+<body>
+<div id="app">
+ <header id="hdr">
+  <div class="brand"><span class="rec"></span>LIVE: <b>CUT ON THE BEAT</b></div><div class="stat"><small>LAGU</small><span id="songTag" style="font-size:12px"></span></div>
+  <div class="stat"><small>TIMECODE</small><span id="tc">00:00:00:00</span></div>
+  <div class="stat"><small>SKOR</small><span id="score">0</span></div>
+  <div class="stat"><small>COMBO</small><span id="combo">x0</span></div>
+  <div class="hype"><small>HYPE PENONTON</small><div class="bar"><i id="hypeBar"></i></div></div>
+ </header>
+ <main>
+  <div class="stage">
+   <div class="top">
+    <div class="mon pgm" id="mPgm"><canvas id="cPgm"></canvas><div class="lbl red"><span id="pgmPre">PROGRAM</span> · <span id="pgmName"></span></div><div id="flash"></div><div id="judge"></div><div id="count"></div></div>
+    <div class="mon pvw" id="mPvw"><canvas id="cPvw"></canvas><div class="lbl grn"><span id="pvwPre">PREVIEW</span> · <span id="pvwName"></span></div><div class="mv">MOVING</div></div>
+   </div>
+   <div id="ticker"><span class="tag">🎧 DIRECTOR</span><span id="icText">Standby.</span></div>
+   <div class="cams" id="cams"></div>
+   <div class="pads" id="pads"></div>
+  </div>
+ </main>
+ <aside>
+  <div><h3>RUNDOWN</h3><div class="rd" id="rd"></div></div>
+  <div><h3>INTERCOM LOG</h3><div id="log"></div></div>
+ </aside>
+ <footer>
+  <div class="beats" id="beats"><i></i><i></i><i></i><i></i></div>
+  <div class="keys"><span class="k-switch"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd> pilih preview &nbsp;·&nbsp; <kbd>SPASI</kbd> TAKE (cut) &nbsp;·&nbsp; atau klik monitor kamera</span><span class="k-light"><kbd>1</kbd>WASH <kbd>2</kbd>BEAMS <kbd>3</kbd>STROBE <kbd>4</kbd>SPOT <kbd>5</kbd>BLACKOUT &nbsp;·&nbsp; langsung nyala, on-beat!</span></div>
+  <div id="next"></div>
+  <button id="take">TAKE</button>
+ </footer>
+</div>
+
+<div id="overlay">
+ <div class="card" id="menu">
+  <h1>LIVE: <em>CUT</em><br>ON THE BEAT</h1>
+  <p class="sub">Kamu crew di konser live. Pilih kursimu, pilih lagunya, dan pastikan semua yang kamu lakukan jatuh tepat di ketukan.</p>
+  <h3 class="step">1 · PILIH KURSI</h3>
+  <div class="roles" id="roles"></div>
+  <h3 class="step">2 · PILIH LAGU</h3>
+  <div class="songs" id="songs"></div>
+  <ul data-howto="switch">
+   <li><b>Tombol 1–4</b> (atau klik monitor) untuk pilih kamera ke PREVIEW, lalu <b>Spasi</b> untuk TAKE ke PROGRAM.</li>
+   <li><b>Cut on-beat:</b> PERFECT (±70ms) atau GOOD (±140ms) bikin combo naik. Meleset, combo pecah.</li>
+   <li><b>Tiap lagu & bagian punya aturan sendiri.</b> Cek rundown di kanan. Di ballad, cut yang terlalu cepat juga dihukum.</li>
+   <li><b>Dengarkan Director</b> untuk momen wajib. Kamera berlabel <b style="color:var(--amb)">MOVING</b> jangan diambil, itu CUT HARAM.</li>
+  </ul>
+  <ul data-howto="light" style="display:none">
+   <li><b>Tombol 1–5</b> langsung nyalain look: WASH, BEAMS, STROBE, SPOT, BLACKOUT. Nggak ada preview, ini busking.</li>
+   <li><b>Ganti look on-beat:</b> PERFECT/GOOD bikin combo naik. Pilih look yang cocok sama bagian lagunya.</li>
+   <li><b>Trik paling ampuh:</b> BLACKOUT 1 ketuk sebelum chorus/drop, lalu meledak pas masuk. SPOT saat solo & nada tinggi.</li>
+   <li><b>Jangan:</b> blackout kelamaan (panggung gelap!) dan strobe di lagu ballad (SALAH MOOD).</li>
+  </ul>
+    <button class="btn" id="start">▶ MULAI SIARAN</button>
+  <p class="note">Pakai headphone atau speaker biar ketukannya kerasa. Tiap lagu ± 1 menit-an. Paling enak dimainkan di laptop.</p>
+ </div>
+ <div class="card" id="result" style="display:none">
+  <div class="res-head"><div class="rank" id="rRank">A</div><div><div class="note" style="margin:0 0 6px">LAPORAN SIARAN</div><div class="quip" id="rQuip"></div></div></div>
+  <div class="grid" id="rGrid"></div>
+  <div class="tips" id="rTips"></div>
+  <button class="btn" id="again">↻ SIARAN ULANG</button> <button class="btn ghost" id="change">♫ GANTI LAGU</button>
+ </div>
+</div>
+
+<script>
+(()=>{
+// ================= UTIL =================
+const rnd=s=>{const x=Math.sin(s*127.1+311.7)*43758.5453;return x-Math.floor(x)};
+const hexA=(h,a)=>{const n=parseInt(h.slice(1),16);return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`};
+const $=id=>document.getElementById(id);
+
+// ================= AUDIO ENGINE =================
+let ac,master,padBus,noiseBuf,lat=0,T0=0,nextStep=0,schedTimer=null;
+const mf=m=>440*Math.pow(2,(m-69)/12);
+function initAudio(){
+ if(ac)return;
+ ac=new (window.AudioContext||window.webkitAudioContext)();
+ const comp=ac.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=4;
+ master=ac.createGain();master.gain.value=.8;master.connect(comp);comp.connect(ac.destination);
+ padBus=ac.createGain();padBus.connect(master);
+ noiseBuf=ac.createBuffer(1,ac.sampleRate*2,ac.sampleRate);
+ const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+}
+function env(g,t,a,p,dec){g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(p,t+a);g.gain.exponentialRampToValueAtTime(.0001,t+a+dec)}
+function osc(type,freq){const o=ac.createOscillator();o.type=type;o.frequency.value=freq;return o}
+function vib(o,t,dur,depth=14,rate=5.5,delay=.12){const l=osc('sine',rate),g=ac.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(depth,t+delay+.15);l.connect(g).connect(o.detune);l.start(t);l.stop(t+dur+.1)}
+function kick(t,v=1){const o=osc('sine',160),g=ac.createGain();o.frequency.setValueAtTime(160,t);o.frequency.exponentialRampToValueAtTime(42,t+.13);env(g,t,.002,v,.32);o.connect(g).connect(master);o.start(t);o.stop(t+.4)}
+function noise(t,type,freq,v,dec,q=1){const s=ac.createBufferSource();s.buffer=noiseBuf;const f=ac.createBiquadFilter();f.type=type;f.frequency.value=freq;f.Q.value=q;const g=ac.createGain();env(g,t,.002,v,dec);s.connect(f).connect(g).connect(master);s.start(t,Math.random());s.stop(t+dec+.05)}
+function snare(t,v=.5){noise(t,'bandpass',1800,v,.16);const o=osc('sine',190),g=ac.createGain();env(g,t,.002,v*.5,.08);o.connect(g).connect(master);o.start(t);o.stop(t+.12)}
+function clap(t,v=.5){[0,.012,.024].forEach(d=>noise(t+d,'bandpass',1200,v*.6,.09))}
+function hat(t,v=.12,open=false){noise(t,'highpass',7500,v,open?.22:.035)}
+function crash(t,v=.32){noise(t,'highpass',4000,v,1.8)}
+function rim(t,v=.25){noise(t,'bandpass',2200,v,.04,3);const o=osc('triangle',820),g=ac.createGain();env(g,t,.001,v*.4,.03);o.connect(g).connect(master);o.start(t);o.stop(t+.06)}
+function duck(t){padBus.gain.cancelScheduledValues(t);padBus.gain.setValueAtTime(.25,t);padBus.gain.linearRampToValueAtTime(1,t+SPB*.8)}
+function bass(t,m,dur,v=.3,type='sawtooth',cut=900){const o=osc(type,mf(m)),f=ac.createBiquadFilter(),g=ac.createGain();f.type='lowpass';f.frequency.setValueAtTime(cut,t);f.frequency.exponentialRampToValueAtTime(200,t+dur);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.005);g.gain.setValueAtTime(v,t+dur*.7);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(f).connect(g).connect(master);o.start(t);o.stop(t+dur+.02)}
+function pad(t,notes,dur,v=.05,att=.25,cut=1300){notes.forEach(m=>[-8,8].forEach(det=>{const o=osc('sawtooth',mf(m));o.detune.value=det;const f=ac.createBiquadFilter();f.type='lowpass';f.frequency.value=cut;const g=ac.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+att);g.gain.setValueAtTime(v,t+Math.max(att+.05,dur-.2));g.gain.exponentialRampToValueAtTime(.0001,t+dur+.4);o.connect(f).connect(g).connect(padBus);o.start(t);o.stop(t+dur+.5)}))}
+function lead(t,m,dur,v=.08,type='square',cut=2600){const o=osc(type,mf(m)),f=ac.createBiquadFilter(),g=ac.createGain();f.type='lowpass';f.frequency.value=cut;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.01);g.gain.setValueAtTime(v,t+dur*.6);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(f).connect(g).connect(master);o.start(t);o.stop(t+dur+.02)}
+// "vokal" synth: saw lewat formant + vibrato
+function voice(t,m,dur,v=.08){const o=osc('sawtooth',mf(m)),o2=osc('triangle',mf(m));const f1=ac.createBiquadFilter();f1.type='bandpass';f1.frequency.value=900;f1.Q.value=2;const f2=ac.createBiquadFilter();f2.type='lowpass';f2.frequency.value=2800;const g=ac.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.06);g.gain.setValueAtTime(v,t+dur*.8);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(f1).connect(f2);o2.connect(f2);f2.connect(g).connect(master);vib(o,t,dur,22,5.2,.2);vib(o2,t,dur,22,5.2,.2);o.start(t);o2.start(t);o.stop(t+dur+.05);o2.stop(t+dur+.05)}
+// suling: sine+triangle, vibrato, desah napas
+function suling(t,m,dur,v=.09){const o=osc('sine',mf(m)),o2=osc('triangle',mf(m)*2),g=ac.createGain(),g2=ac.createGain();g2.gain.value=.12;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.03);g.gain.setValueAtTime(v,t+dur*.75);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);o2.connect(g2).connect(g);g.connect(master);vib(o,t,dur,16,6,.1);o.start(t);o2.start(t);o.stop(t+dur+.05);o2.stop(t+dur+.05);noise(t,'bandpass',mf(m)*2,v*.35,.06,4)}
+// kendang
+function dung(t,v=.9){const o=osc('sine',150),g=ac.createGain();o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(92,t+.16);env(g,t,.002,v,.24);o.connect(g).connect(master);o.start(t);o.stop(t+.3)}
+function tak(t,v=.6){const o=osc('triangle',420),g=ac.createGain();o.frequency.setValueAtTime(430,t);o.frequency.exponentialRampToValueAtTime(330,t+.05);env(g,t,.001,v*.7,.07);o.connect(g).connect(master);o.start(t);o.stop(t+.1);noise(t,'bandpass',2800,v*.5,.03,2)}
+function tek(t,v=.3){noise(t,'bandpass',4200,v,.025,3)}
+function tamb(t,v=.08){noise(t,'highpass',8000,v,.07);noise(t,'bandpass',6000,v*.6,.05,5)}
+function organ(t,notes,dur,v=.04){notes.forEach(m=>{const o=osc('square',mf(m)),f=ac.createBiquadFilter(),g=ac.createGain();f.type='lowpass';f.frequency.value=1900;env(g,t,.004,v,dur);o.connect(f).connect(g).connect(master);o.start(t);o.stop(t+dur+.05)})}
+function piano(t,m,v=.09,dec=1.6){const o=osc('triangle',mf(m)),o2=osc('sine',mf(m)*2),g=ac.createGain(),g2=ac.createGain();g2.gain.value=.25;env(g,t,.004,v,dec);o.connect(g);o2.connect(g2).connect(g);g.connect(master);o.start(t);o2.start(t);o.stop(t+dec+.1);o2.stop(t+dec+.1)}
+function pluck(t,m,v=.1){const o=osc('sawtooth',mf(m)),f=ac.createBiquadFilter(),g=ac.createGain();f.type='lowpass';f.frequency.setValueAtTime(3500,t);f.frequency.exponentialRampToValueAtTime(500,t+.5);env(g,t,.002,v,.9);o.connect(f).connect(g).connect(master);o.start(t);o.stop(t+1)}
+const runLen=(arr,i)=>{let n=1;while(i+n<arr.length&&arr[i+n]===null)n++;return n};
+
+// ================= LAGU 1: FESTIVAL DROP (EDM) =================
+const E_PROG=[[57,60,64],[53,57,60],[55,60,64],[55,59,62]],E_ROOT=[45,41,48,43];
+const E_MEL=[[69,null,72,69,76,null,74,72],[69,null,72,null,72,74,72,69],[67,null,72,76,79,null,76,74],[74,null,72,71,67,null,71,74]];
+const E_SOLO=[81,84,81,79,76,79,81,76,74,76,79,81,84,86,84,81,88,86,84,81,79,81,84,79,76,74,72,74,76,79,81,84];
+function playEDM(s,t){
+ const beat=s>>2,bar=beat>>2,st=s%16;if(bar>=BARS)return;
+ const N=sectionAt(beat).name,ch=E_PROG[bar%4],root=E_ROOT[bar%4];
+ if(st===0&&N!=='OUTRO')pad(t,ch,SPB*4,N==='VERSE'?.04:.05);
+ if(N==='INTRO'){if(st===0)kick(t,.7);if(bar>=2&&st%2===0)hat(t,.07);if(bar===3&&st>=12)snare(t,.15+.05*(st-12))}
+ else if(N==='VERSE'){if(st===0||st===8)kick(t);if(st===10&&bar%2)kick(t,.7);if(st===4||st===12)snare(t,.42);if(st%2===0)hat(t,.09);if(st%4===0)bass(t,root,SPB*.9);
+  if(bar===10&&st===0){voice(t,76,SPB*2.8,.09)}}
+ else if(N==='PRE-CHORUS'){if(st%4===0)kick(t);if(bar===15){if(st>=8)snare(t,.15+.04*(st-8));else if(st===4)snare(t,.4)}else if(st===4||st===12)snare(t,.42);hat(t,st%2?.05:.1);if(st%2===0)bass(t,root,SPB*.45)}
+ else if(N==='CHORUS'){if(st%4===0){kick(t);duck(t)}if(st===4||st===12)clap(t,.6);if(st%4===2)hat(t,.12,true);if(st%2===0)bass(t,root+(st%4===2?12:0),SPB*.45);
+  if(st%2===0){const m=E_MEL[bar%4][st/2];if(m)lead(t,m,SPB*.45)}if(st===0&&(bar===16||bar===20))crash(t)}
+ else if(N==='DROP'){if(st%4===0){kick(t,1.05);duck(t)}if(st===4||st===12)snare(t,.5);hat(t,st%2?.05:.11);bass(t,root+(st%4===2?12:0),SPB*.22,.27);
+  if(bar===26||bar===27){if(st%2===0)lead(t,E_SOLO[(bar-26)*8+st/2],SPB*.48,.09,'sawtooth',3400)}
+  else{const arp=[ch[0]+12,ch[1]+12,ch[2]+12,ch[1]+24];lead(t,arp[st%4],SPB*.2,.05,'sawtooth',2200)}
+  if(st===0&&bar===24)crash(t)}
+ else if(N==='OUTRO'){if(bar<35){if(st===0){pad(t,ch,SPB*4,.045);kick(t,.6)}if(st%4===0)hat(t,.05)}
+  else if(st===0){crash(t);kick(t,1.1);bass(t,33,SPB*6,.35);pad(t,[57,60,64,69],SPB*6,.06)}}
+}
+
+// ================= LAGU 2: KOPLO KEBUT =================
+// D minor harmonik: Dm Dm Gm A
+const K_CH=[[62,65,69],[62,65,69],[62,67,70],[61,64,69]],K_ROOT=[38,38,43,45];
+const K_SUL=[[74,null,76,77,76,74,73,74],[69,null,70,69,67,65,67,69],[70,null,69,67,65,null,64,65],[62,null,64,65,67,null,69,null]];
+const K_REFF=[[69,null,74,null,74,73,74,76],[77,null,76,74,null,73,74,null],[70,null,70,69,67,null,69,70],[69,null,null,73,null,null,null,null]];
+const K_PAT={a:'D..T..T.D.tT.DT.',b:'D.tT..T.D.tT.DTt',fill:'TtTtDtTtDDTTDDTT',solo1:'DtTtDTtTDtDTTtDT',solo2:'TTDtTTDtDDTtTTTT',soft:'D.....T.D.....T.'};
+const K_BASS={0:0,3:0,6:7,8:0,11:0,14:7};
+function kend(ch,t,v=1){if(ch==='D')dung(t,.9*v);else if(ch==='T')tak(t,.62*v);else if(ch==='t')tak(t,.3*v);else if(ch==='k')tek(t,.3*v)}
+function playKoplo(s,t){
+ const beat=s>>2,bar=beat>>2,st=s%16;if(bar>=BARS)return;
+ const N=sectionAt(beat).name,ch=K_CH[bar%4],root=K_ROOT[bar%4];
+ const fill=bar===11||bar===15||bar===23||bar===31;
+ const pat=fill?K_PAT.fill:(bar%2?K_PAT.b:K_PAT.a);
+ const bassLine=v=>{if(K_BASS[st]!==undefined)bass(t,root+K_BASS[st],SPB*.38,v,'triangle',700)};
+ const sul=(arr,v,oct=0)=>{if(st%2===0){const i=st/2,m=arr[bar%4][i];if(m)suling(t,m+oct,SPB*.5*runLen(arr[bar%4],i),v)}};
+ if(N==='INTRO'){if(st===0)pad(t,ch,SPB*4,.03);sul(K_SUL,.11);if(bar>=2)kend(bar===3?K_PAT.fill[st]:K_PAT.soft[st],t,bar===3?.8:.6)}
+ else if(N==='VERSE'){kend(pat[st],t,.85);bassLine(.26);if(st%4===2)organ(t,ch,SPB*.2,.03);if(st===0)pad(t,ch,SPB*4,.02);if(st%4===0)tek(t,.12);
+  if(bar===10&&st===0){voice(t,74,SPB*1.4,.09);voice(t+SPB*1.5,77,SPB*2.4,.1)}}
+ else if(N==='PRE-REFF'){kend(pat[st],t,.95);bassLine(.28);if(st%4===2)organ(t,ch,SPB*.2,.04);tamb(t,st%2?.03:.06);if(st===0)pad(t,ch,SPB*4,.03);if(bar===15&&st===12)crash(t,.2)}
+ else if(N==='REFF'){if(st%4===0){kick(t,.9);duck(t)}kend(pat[st],t);bassLine(.3);if(st%4===2)organ(t,ch,SPB*.22,.05);tamb(t,st%2?.04:.08);if(st===0)pad(t,ch,SPB*4,.035);
+  if(st%2===0){const i=st/2,m=K_REFF[bar%4][i];if(m)voice(t,m,SPB*.5*runLen(K_REFF[bar%4],i)*.95,.075)}
+  if(st===0&&(bar===16||bar===20))crash(t)}
+ else if(N==='JOGET'){if(st%4===0){kick(t,1);duck(t)}bassLine(.3);if(st%4===2)organ(t,ch,SPB*.22,.05);tamb(t,st%2?.04:.09);
+  if(bar===26||bar===27){kend((bar===26?K_PAT.solo1:K_PAT.solo2)[st],t,1.15);if(st%2)tek(t,.2)}
+  else{kend(pat[st],t);sul(K_SUL,.12,bar>=28?12:0)}
+  if(st===0&&(bar===24||bar===28))crash(t)}
+ else if(N==='OUTRO'){if(bar<35){kend(bar===34?K_PAT.fill[st]:K_PAT.soft[st],t,.8);if(st===0){pad(t,ch,SPB*4,.03);bass(t,root,SPB*1.5,.25,'triangle',700)}if(bar===33)sul(K_SUL,.09)}
+  else{if(st===0){dung(t,1.2);kick(t,1.1);crash(t);pad(t,[62,65,69,74],SPB*6,.05);bass(t,38,SPB*5,.33,'triangle',800);suling(t,74,SPB*4,.1)}if(st===2)tak(t,1)}}
+}
+
+// ================= LAGU 3: SLOW BURN (BALLAD) =================
+const B_CH=[[60,64,67],[59,62,67],[57,60,64],[57,60,65]],B_ROOT=[36,43,45,41];
+const B_MEL=[[72,null,74,76,null,76,74,72],[71,null,null,67,null,69,71,null],[72,null,71,69,null,67,69,null],[65,null,67,69,null,72,null,null]];
+const B_SOLO=[[76,79,81,79,76,74,72,74],[71,74,79,74,71,67,69,71],[72,76,79,84,81,79,76,72],[77,76,74,72,74,77,81,null]];
+function playBallad(s,t){
+ const beat=s>>2,bar=beat>>2,st=s%16;if(bar>=BARS)return;
+ const N=sectionAt(beat).name,kc=bar>=18?2:0,ch=B_CH[bar%4].map(x=>x+kc),root=B_ROOT[bar%4]+kc;
+ if(bar===23){if(st===0){[root+12,...ch,ch[0]+12].forEach((m,i)=>piano(t+i*.05,m,.08,3.5));pad(t,ch,SPB*6,.03,1.2,1000);bass(t,root,SPB*5,.16,'triangle',500);voice(t,72+kc,SPB*4.5,.085)}return}
+ if(bar>=24)return;
+ const arp=[root+12,ch[0],ch[1],ch[2],ch[0]+12,ch[2],ch[1],ch[0]];
+ if(st%2===0)piano(t,arp[st/2],N==='INTRO'||N==='VERSE'?.08:.06);
+ if(st===0)bass(t,root,SPB*3.8,.15,'triangle',500);
+ if(N==='CHORUS'||N==='CHORUS AKHIR'||N==='BRIDGE'){if(st===0)pad(t,ch,SPB*4,N==='BRIDGE'?.03:.035,.9,1100)}
+ if(N==='CHORUS'||N==='CHORUS AKHIR'){if(st===0||st===8)kick(t,.55);if(st===4||st===12)rim(t,.22);if(st%4===2)hat(t,.035);
+  const mb=(N==='CHORUS'?bar-8:bar-18)%4;if(st%2===0){const i=st/2,m=B_MEL[mb][i];if(m)voice(t,m+kc,SPB*.5*runLen(B_MEL[mb],i)*.95,.07)}
+  if(bar===18&&st===0)crash(t,.22)}
+ if(N==='BRIDGE'){if(st===0)kick(t,.35);if(st%2===0){const i=st/2,m=B_SOLO[(bar-14)%4][i];if(m)pluck(t,m,.08)}}
+ if(N==='VERSE'&&bar===6&&st===0)voice(t,79,SPB*3.6,.09);
+}
+
+
+// ================= INSTRUMEN TAMBAHAN =================
+let distCurve=null;
+function dist(){if(distCurve)return distCurve;const n=1024;distCurve=new Float32Array(n);for(let i=0;i<n;i++){const x=i/n*2-1;distCurve[i]=Math.tanh(x*4)}return distCurve}
+function powerChord(t,m,dur,v=.06){[m,m+7,m+12].forEach(n=>{const o=osc('sawtooth',mf(n));o.detune.value=(Math.random()-.5)*10;const ws=ac.createWaveShaper();ws.curve=dist();const f=ac.createBiquadFilter();f.type='lowpass';f.frequency.value=2200;const g=ac.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.01);g.gain.setValueAtTime(v,t+dur*.8);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(ws).connect(f).connect(g).connect(master);o.start(t);o.stop(t+dur+.05)})}
+function eguitar(t,m,dur,v=.07){const o=osc('sawtooth',mf(m)),ws=ac.createWaveShaper();ws.curve=dist();const f=ac.createBiquadFilter();f.type='lowpass';f.frequency.value=2600;const g=ac.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.01);g.gain.setValueAtTime(v*.8,t+dur*.7);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(ws).connect(f).connect(g).connect(master);vib(o,t,dur,18,6,.15);o.start(t);o.stop(t+dur+.05)}
+function nylon(t,m,v=.09,dec=1.3){const o=osc('triangle',mf(m)),o2=osc('sine',mf(m)),f=ac.createBiquadFilter(),g=ac.createGain();f.type='lowpass';f.frequency.setValueAtTime(2600,t);f.frequency.exponentialRampToValueAtTime(700,t+.4);env(g,t,.002,v,dec);o.connect(f);o2.connect(f);f.connect(g).connect(master);o.start(t);o2.start(t);o.stop(t+dec+.1);o2.stop(t+dec+.1)}
+function mandolin(t,m,v=.03){const o=osc('sawtooth',mf(m)),f=ac.createBiquadFilter(),g=ac.createGain();f.type='lowpass';f.frequency.value=3200;env(g,t,.002,v,.12);o.connect(f).connect(g).connect(master);o.start(t);o.stop(t+.18)}
+function shaker(t,v=.025){noise(t,'highpass',6500,v,.05)}
+function sub808(t,m,dur,v=.4){const o=osc('sine',mf(m+12));o.frequency.setValueAtTime(mf(m+12),t);o.frequency.exponentialRampToValueAtTime(mf(m),t+.06);const g=ac.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.005);g.gain.setValueAtTime(v,t+dur*.7);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g).connect(master);o.start(t);o.stop(t+dur+.05)}
+function acid(t,m,dur,cut,v=.07,acc=false){const o=osc('sawtooth',mf(m)),f=ac.createBiquadFilter(),g=ac.createGain();f.type='lowpass';f.Q.value=14;f.frequency.setValueAtTime(cut*(acc?2.2:1),t);f.frequency.exponentialRampToValueAtTime(Math.max(120,cut*.35),t+dur);env(g,t,.003,acc?v*1.4:v,dur);o.connect(f).connect(g).connect(master);o.start(t);o.stop(t+dur+.05)}
+function riser(t,dur,v=.12){const s=ac.createBufferSource();s.buffer=noiseBuf;s.loop=true;const f=ac.createBiquadFilter();f.type='bandpass';f.Q.value=2;f.frequency.setValueAtTime(400,t);f.frequency.exponentialRampToValueAtTime(8000,t+dur);const g=ac.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+dur*.95);g.gain.exponentialRampToValueAtTime(.0001,t+dur+.05);s.connect(f).connect(g).connect(master);s.start(t);s.stop(t+dur+.1)}
+function gong(t,v=.45){[55,57.5,110.6].forEach((fq,i)=>{const o=osc('sine',fq),g=ac.createGain();env(g,t,.01,v/(i+1),2.8);o.connect(g).connect(master);o.start(t);o.stop(t+3)})}
+function kempul(t,v=.25){[98,99.3].forEach(fq=>{const o=osc('sine',fq),g=ac.createGain();env(g,t,.005,v,1.1);o.connect(g).connect(master);o.start(t);o.stop(t+1.2)})}
+function kenong(t,m,v=.08){const o=osc('triangle',mf(m)),o2=osc('sine',mf(m)*2.76),g=ac.createGain();env(g,t,.002,v,.45);o.connect(g);o2.connect(g);g.connect(master);o.start(t);o2.start(t);o.stop(t+.5);o2.stop(t+.5)}
+function slompret(t,m,dur,v=.06){const o=osc('square',mf(m)),o2=osc('sawtooth',mf(m)),f=ac.createBiquadFilter();f.type='bandpass';f.frequency.value=1400;f.Q.value=2.5;const g=ac.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.02);g.gain.setValueAtTime(v,t+dur*.8);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(f);o2.connect(f);f.connect(g).connect(master);vib(o,t,dur,28,7,.08);vib(o2,t,dur,28,7,.08);o.start(t);o2.start(t);o.stop(t+dur+.05);o2.stop(t+dur+.05)}
+const mel8=(arr,st,t,fn)=>{if(st%2)return;const i=st/2,m=arr[i];if(m!=null)fn(t,m,SPB*.5*runLen(arr,i))};
+
+// ================= EDM 2: NEON BLOOM (future bass) =================
+const NB_CH=[[65,69,72,76],[64,67,71,74],[62,65,69,72],[60,64,67,71]],NB_ROOT=[41,40,38,36];
+const NB_MEL=[[81,null,79,76,null,74,76,null],[79,null,76,74,null,72,74,76],[77,null,76,74,72,null,69,null],[72,74,76,null,79,null,null,null]];
+const NB_GATE='x.xx.x.xx.x.xx.x';
+function playNeon(s,t){const beat=s>>2,bar=beat>>2,st=s%16;if(bar>=BARS)return;const N=sectionAt(beat).name,ch=NB_CH[bar%4],root=NB_ROOT[bar%4];
+ if(N==='INTRO'){if(st===0)pad(t,ch,SPB*4,.03,.4,1100);if(st%4===2)hat(t,.04);if(bar%2&&st%4===0)voice(t,ch[3]+12,SPB*.4,.04)}
+ else if(N==='VERSE'){if(st===0||st===10)kick(t,.9);if(st===8)clap(t,.5);if(st%2===0)hat(t,st%4?.05:.08);if(st===0)pad(t,ch,SPB*4,.03,.2,1500);if(st===0||st===8)sub808(t,root,SPB*1.8,.3);
+  if(bar===10&&st===0)voice(t,81,SPB*3,.09);else if(bar%2===1&&st%4===0&&st<12)voice(t,ch[(st/4)%4]+12,SPB*.35,.04)}
+ else if(N==='BUILD'){const r=bar-12;if(st===0)pad(t,ch,SPB*4,.035,.1,1500+r*600);if(r<2?st%4===0:r<3?st%2===0:true)snare(t,.12+r*.07+(r===3?st*.01:0));if(st===0&&r===0)riser(t,SPB*16,.1);if(st%4===0&&r<3)kick(t,.7)}
+ else if(N==='DROP'||N==='DROP 2'){if(st===0||st===10){kick(t,1.05);duck(t)}if(st===8)clap(t,.65);hat(t,st%2?.04:.08);if(st===0||st===6||st===10)sub808(t,root,SPB*.9,.38);
+  if(NB_GATE[st]==='x')pad(t,ch.map(x=>x+12),SPB*.22,.045,.005,3200);mel8(NB_MEL[bar%4],st,t,(tt,m,d)=>voice(tt,m,d*.9,.06));if(st===0&&(bar===16||bar===28))crash(t)}
+ else if(N==='BREAKDOWN'){if(st===0)pad(t,ch,SPB*4,.03,.5,1300);if(st%2===0)piano(t,[root+24,ch[0],ch[1],ch[2],ch[3],ch[2],ch[1],ch[0]][st/2],.06);
+  if(bar===24||bar===25)mel8([[76,79,81,84,null,81,79,76],[74,76,79,null,76,74,72,null]][bar-24],st,t,(tt,m,d)=>eguitar(tt,m,d,.06));if(bar===27&&st===0)riser(t,SPB*4,.1)}
+ else if(N==='OUTRO'&&st===0){crash(t);kick(t,1.1);sub808(t,41,SPB*4,.4);pad(t,[65,69,72,76,81],SPB*6,.05,.01,2600)}
+}
+
+// ================= EDM 3: BASEMENT 128 (techno) =================
+const BS_ACID=[45,45,57,45,48,45,55,45,45,57,45,52,45,55,57,45],BS_ACC='x...x..x..x...x.';
+function playBasement(s,t){const beat=s>>2,bar=beat>>2,st=s%16;if(bar>=BARS)return;const N=sectionAt(beat).name;
+ const k4=st%4===0,off=st%4===2;
+ if(N==='INTRO'){if(k4)kick(t,.95);if(bar>=2&&off)hat(t,.09,true);if(bar===3&&st>=12)hat(t,.05)}
+ else if(N==='GROOVE'){if(k4)kick(t);if(off){hat(t,.1,true);bass(t,33,SPB*.3,.22,'sawtooth',300)}if(st===4||st===12)clap(t,.45);if(st%2===1)hat(t,.03);acid(t,BS_ACID[st],SPB*.22,380,.04,BS_ACC[st]==='x')}
+ else if(N==='BREAK'){if(st===0)pad(t,[45,48,52,57],SPB*4,.035,.6,900);if(bar===12&&st===0){voice(t,69,SPB*2.5,.08);riser(t,SPB*16,.12)}if(bar===15){if(st%2===0||st>=8)snare(t,.12+st*.025)}else if(st%8===0)kick(t,.5)}
+ else if(N==='PEAK'||N==='ACID'){if(k4){kick(t,1.05);duck(t)}if(off){hat(t,.12,true);bass(t,bar%2&&st===14?36:33,SPB*.3,.25,'sawtooth',320)}if(st===4||st===12)clap(t,.55);hat(t,st%2?.035:.06);
+  if(N==='PEAK'){if(st===6||st===14)pad(t,[57,60,64],SPB*.6,.05,.005,1800);acid(t,BS_ACID[st],SPB*.22,900,.05,BS_ACC[st]==='x');if(st===0&&bar===16)crash(t)}
+  else{const sw=600+((bar-24)*16+st)/128*3400;acid(t,BS_ACID[st]+(bar>=28&&st%8===4?12:0),SPB*.22,sw,.07,BS_ACC[st]==='x');if(st===0&&bar===24)crash(t)}}
+ else if(N==='OUTRO'){if(bar<35){if(k4)kick(t,.9);if(off)hat(t,.07,true);if(bar===34&&st>=8&&st%2===0)acid(t,45,SPB*.2,500,.05)}else if(st===0){crash(t);kick(t,1.1);pad(t,[45,48,52,57],SPB*5,.05,.01,1500);bass(t,33,SPB*3,.3,'sawtooth',400)}}
+}
+
+// ================= KOPLO 2: JARANAN GAS POL =================
+const J_CH=[[64,67,71],[62,67,71],[60,64,67],[59,63,66]],J_ROOT=[40,43,36,35];
+const J_MEL=[[76,null,79,76,74,null,71,74],[76,null,null,79,81,79,76,null],[72,null,74,76,79,null,76,74],[71,null,75,null,78,null,null,null]];
+const J_PAT={a:'D.TtD.TtD.TtDTTt',fill:'TtTtDtTtDDTTDDTT',soft:'D...D.T.D...D.T.'};
+function playJaranan(s,t){const beat=s>>2,bar=beat>>2,st=s%16;if(bar>=BARS)return;const N=sectionAt(beat).name,ch=J_CH[bar%4],root=J_ROOT[bar%4];
+ const fill=bar===11||bar===15||bar===23||bar===31,pat=fill?J_PAT.fill:J_PAT.a;
+ const sl=(v,oct=0)=>mel8(J_MEL[bar%4],st,t,(tt,m,d)=>slompret(tt,m+oct,d,v));
+ if(N==='INTRO'){sl(.06);if(st===0&&bar%2===0)gong(t,.35);if(bar>=2)kend(bar===3?J_PAT.fill[st]:J_PAT.soft[st],t,.7)}
+ else if(N==='VERSE'){kend(pat[st],t,.9);if(st===8)kempul(t,.18);if(st===0&&bar%4===0)gong(t,.3);if(st%4===2)bass(t,root+12,SPB*.4,.24,'triangle',700);if(st%4===2)kenong(t,ch[2]+12,.04);
+  if(bar===10&&st===0){voice(t,76,SPB*1.4,.09);voice(t+SPB*1.5,79,SPB*2.4,.1)}}
+ else if(N==='PRE-REFF'){kend(pat[st],t);tamb(t,st%2?.03:.06);if(st%4===2)bass(t,root+12,SPB*.4,.26,'triangle',700);if(st%4===0)kenong(t,ch[st/4%3]+12,.05);if(bar===15&&st===12)crash(t,.2)}
+ else if(N==='REFF'||N==='JOGET'){if(st%4===0){kick(t,1);duck(t)}if(st===0&&bar%4===0)gong(t,.4);if(st===8)kempul(t,.2);tamb(t,st%2?.04:.09);if(st%4===2){bass(t,root+12,SPB*.4,.3,'triangle',800);kenong(t,ch[2]+12,.05)}
+  if(N==='JOGET'&&(bar===26||bar===27)){kend((bar===26?K_PAT.solo1:K_PAT.solo2)[st],t,1.2);tek(t,.15)}
+  else{kend(pat[st],t);if(N==='REFF')mel8(J_MEL[bar%4],st,t,(tt,m,d)=>voice(tt,m,d*.95,.075));else sl(.065,bar>=28?12:0)}
+  if(st===0&&(bar===16||bar===24||bar===28))crash(t)}
+ else if(N==='OUTRO'){if(bar<35){kend(bar===34?J_PAT.fill[st]:J_PAT.soft[st],t,.8);if(st===0&&bar===32)gong(t,.35);if(bar===33)sl(.05)}else{if(st===0){gong(t,.6);dung(t,1.2);kick(t,1.1);crash(t);slompret(t,76,SPB*4,.07);pad(t,[64,67,71],SPB*5,.04)}if(st===2)tak(t,1)}}
+}
+
+// ================= KOPLO 3: DANGDUT LAWAS =================
+const L_CH=[[57,60,64],[57,62,65],[56,59,64],[57,60,64]],L_ROOT=[45,38,40,45];
+const L_MEL=[[69,null,72,71,69,null,68,69],[74,null,72,71,null,69,71,72],[71,null,69,68,null,64,68,71],[69,null,null,null,64,65,68,null]];
+const L_SOLO=[[76,77,76,74,72,71,72,74],[76,null,80,81,80,77,76,null],[74,72,71,69,71,72,74,76],[77,76,74,72,71,68,69,null]];
+const L_PAT='T..D..T.T..D.DT.';
+function playLawas(s,t){const beat=s>>2,bar=beat>>2,st=s%16;if(bar>=BARS)return;const N=sectionAt(beat).name,ch=L_CH[bar%4],root=L_ROOT[bar%4];
+ const bl=v=>{const m={0:0,6:7,8:0,12:12}[st];if(m!==undefined)bass(t,root+m,SPB*.45,v,'triangle',650)};
+ if(N==='INTRO'){mel8([[76,null,77,76,74,null,72,74],[76,null,null,77,80,null,77,76],[74,null,72,71,72,null,71,69],[68,null,69,null,null,null,null,null]][bar%4],st,t,(tt,m,d)=>suling(tt,m,d,.1));if(bar>=2)kend(L_PAT[st],t,.6);if(st===0)pad(t,ch,SPB*4,.025)}
+ else if(N==='VERSE'){kend(L_PAT[st],t,.9);bl(.26);if(st%2===0)mandolin(t,ch[(st/2)%3]+12,.025);if(bar%2===1&&st>=10&&st%2===0)eguitar(t,[72,71,69][(st-10)/2],SPB*.45,.05);
+  if(bar===7&&st===0)voice(t,76,SPB*3.2,.09)}
+ else if(N==='REFF'||N==='REFF 2'){kend(L_PAT[st],t);bl(.3);tamb(t,st%2?.03:.06);mandolin(t,ch[st%3]+12,.03);if(st===0)pad(t,ch,SPB*4,.03);
+  mel8(L_MEL[bar%4],st,t,(tt,m,d)=>voice(tt,m+(N==='REFF 2'?0:0),d*.95,.075));if(st===0&&(bar===12||bar===24))crash(t,.25)}
+ else if(N==='MELODI'){kend(L_PAT[st],t);bl(.28);if(st%2===0)mandolin(t,ch[(st/2)%3],.02);mel8(L_SOLO[bar-20],st,t,(tt,m,d)=>eguitar(tt,m,d,.075))}
+ else if(N==='OUTRO'){if(st===0){dung(t,1.2);crash(t,.25);pad(t,[57,60,64,69],SPB*5,.04);bass(t,45,SPB*3,.3,'triangle',700);eguitar(t,69,SPB*3,.06)}if(st===2)tak(t,.9)}
+}
+
+// ================= BALLAD 2: PETIK SENJA (akustik) =================
+const SJ_CH=[[55,59,62],[54,57,62],[52,55,59],[52,55,60]],SJ_ROOT=[43,38,40,36];
+const SJ_MEL=[[71,null,74,null,72,71,69,null],[69,null,71,72,null,71,69,67],[67,null,69,71,null,67,64,null],[64,null,67,69,null,null,null,null]];
+function playSenja(s,t){const beat=s>>2,bar=beat>>2,st=s%16;if(bar>=BARS)return;const N=sectionAt(beat).name,ch=SJ_CH[bar%4],root=SJ_ROOT[bar%4];
+ if(bar===22){if(st===0){[root,ch[0],ch[1],ch[2],ch[0]+12].forEach((m,i)=>nylon(t+i*.06,m,.08,3));voice(t,67,SPB*4.5,.08);pad(t,ch,SPB*6,.025,1,900)}return}
+ if(bar>=23)return;
+ const pick=[root,ch[1]+12,ch[2]+12,ch[0]+12,root+12,ch[1]+12,ch[2]+12,ch[1]+12];
+ if(st%2===0)nylon(t,pick[st/2],N==='INTRO'?.09:.075);
+ if(N==='VERSE 2'&&(bar===12||bar===13)&&st%2===1)nylon(t,[74,76,79,81,79,76,74,71][(st-1)/2]+(bar===13?-5:0),.07);
+ if(/^CHORUS/.test(N)){if(st%2===0)shaker(t);if(st===0)kick(t,.4);if(st===8)rim(t,.15);if(st===0)pad(t,ch,SPB*4,.025,.8,1000);
+  mel8(SJ_MEL[(bar-(N==='CHORUS'?8:16))%4],st,t,(tt,m,d)=>voice(tt,m+12,d*.95,.065))}
+ if(N==='VERSE'&&bar===7&&st===0)voice(t,79,SPB*3.4,.085);
+}
+
+// ================= BALLAD 3: MELEDAK PELAN (power ballad) =================
+const PB_CH=[[62,66,69],[57,61,64],[59,62,66],[55,59,62]],PB_ROOT=[38,45,47,43];
+const PB_MEL=[[74,null,76,78,null,76,74,null],[73,null,null,69,null,71,73,null],[74,null,73,71,null,69,71,null],[67,null,69,71,null,74,null,null]];
+const PB_SOLO=[[78,81,83,81,78,76,74,76],[73,76,81,null,79,78,76,73],[74,78,81,86,83,81,78,74],[79,78,76,74,76,79,83,null]];
+function playMeledak(s,t){const beat=s>>2,bar=beat>>2,st=s%16;if(bar>=BARS)return;const N=sectionAt(beat).name,kc=bar>=16&&bar<24?2:0,ch=PB_CH[bar%4].map(x=>x+kc),root=PB_ROOT[bar%4]+kc;
+ if(bar===26){if(st===0){[root+12,...ch,ch[0]+12].forEach((m,i)=>piano(t+i*.05,m,.08,3.5));pad(t,ch,SPB*6,.03,1.2,1000);voice(t,74,SPB*4.5,.085);bass(t,root,SPB*4,.15,'triangle',500)}return}
+ if(bar>=27)return;
+ const arp=[root+12,ch[0],ch[1],ch[2],ch[0]+12,ch[2],ch[1],ch[0]];
+ if(N!=='CHORUS AKHIR'||st%4===0){if(st%2===0)piano(t,arp[st/2],N==='CHORUS AKHIR'?.05:.075)}
+ if(st===0)bass(t,root,SPB*3.8,N==='CHORUS AKHIR'?.25:.15,'triangle',N==='CHORUS AKHIR'?900:500);
+ if(N==='CHORUS'){if(st===0)pad(t,ch,SPB*4,.03,.8,1100);if(st===0||st===8)kick(t,.5);if(st===4||st===12)rim(t,.2);mel8(PB_MEL[(bar-8)%4],st,t,(tt,m,d)=>voice(tt,m,d*.95,.07))}
+ if(N==='BRIDGE'){const r=bar-12;if(st===0)kick(t,.6);if(r>=2&&st%4===0)snare(t,.15+r*.05);if(r===3&&st>=8)snare(t,.25+st*.02);mel8(PB_SOLO[r],st,t,(tt,m,d)=>eguitar(tt,m,d,.07));if(st===0)pad(t,ch,SPB*4,.03,.6,1000)}
+ if(N==='CHORUS AKHIR'){if(st===0||st===8||st===10){kick(t,1.05);duck(t)}if(st===4||st===12)snare(t,.6);if(st%2===0)hat(t,.07);if(st===0)crash(t,bar%4===0?.32:.15);
+  if(st===0||st===8)powerChord(t,root+12,SPB*2,.045);if(st===0)pad(t,ch,SPB*4,.04,.3,1500);mel8(PB_MEL[(bar-16)%4],st,t,(tt,m,d)=>voice(tt,m+kc,d*.95,.085))}
+ if(N==='VERSE'&&bar===6&&st===0)voice(t,78,SPB*3.5,.085);
+ if(N==='OUTRO'&&st===0&&bar===24)crash(t,.2);
+}
+
+// ================= SONGS =================
+const CAMS_STD={1:'WIDE',2:'VOKAL CU',3:'GITAR MS',4:'CROWD'};
+const SONGS={
+ edm:{id:'edm',group:'EDM',title:'Festival Drop',genre:'EDM',bpm:124,bars:36,play:playEDM,style:'edm',diff:'SEDANG',
+  trains:'Cut cepat & agresif, ngejar drop.',
+  cams:CAMS_STD,
+  fx:{high:[39,46],point:[79,86],confetti:[64,80],solo:[104,112],final:140},
+  sections:[
+   {name:'INTRO',from:0,to:4,pref:[1,4],maxHold:8,col:['#3a5cff','#9a3cff'],tip:'Santai. Wide & crowd.'},
+   {name:'VERSE',from:4,to:12,pref:[2,3],maxHold:8,col:['#ff8a3c','#ff3c6e'],tip:'Intim: close-up vokal & gitar.'},
+   {name:'PRE-CHORUS',from:12,to:16,pref:[2,1],maxHold:4,col:['#ff3cd2','#3cc8ff'],tip:'Bangun tensi, cut makin rapat.'},
+   {name:'CHORUS',from:16,to:24,pref:[1,4,2],maxHold:4,col:['#ffd23c','#ff3c3c'],tip:'Buka lebar! Wide & crowd.'},
+   {name:'DROP',from:24,to:32,pref:[1,2,3,4],maxHold:2,col:['#3cffb4','#ff3cf0'],tip:'GAS! Cut tiap 2 ketuk.'},
+   {name:'OUTRO',from:32,to:36,pref:[1],maxHold:16,col:['#3a5cff','#ffffff'],tip:'Turunin, tutup di wide.'}],
+  moments:[
+   {beat:40,cam:2,short:'NADA TINGGI',desc:'vokalis mau narik nada tinggi, siap close-up!'},
+   {beat:64,cam:1,short:'CONFETTI',desc:'CONFETTI di awal chorus, ambil WIDE!'},
+   {beat:80,cam:4,short:'NUNJUK PENONTON',desc:'vokalis nunjuk penonton, ambil CROWD!'},
+   {beat:104,cam:3,short:'SOLO GITAR',desc:'solo gitar masuk, ambil GITAR & tahan!',hold:7},
+   {beat:140,cam:1,short:'HIT TERAKHIR',desc:'hit terakhir, tutup di WIDE!'}],
+  repos:[{cam:2,from:26,to:33},{cam:1,from:52,to:57},{cam:4,from:70,to:77},{cam:3,from:116,to:122}]},
+ koplo:{id:'koplo',group:'KOPLO',title:'Koplo Kebut',genre:'DANGDUT KOPLO',bpm:132,bars:36,play:playKoplo,style:'koplo',diff:'SEDANG–SUSAH',
+  trains:'Ngunci groove kendang yang ganjil & nangkep momen panggung.',
+  cams:{1:'WIDE',2:'BIDUAN CU',3:'KENDANG MS',4:'CROWD'},
+  fx:{high:[39,46],dance:[79,88],solo:[104,112],final:140,saweran:[64,80]},
+  sections:[
+   {name:'INTRO',from:0,to:4,pref:[1,3],maxHold:8,col:['#ff6a2c','#ffcf3c'],tip:'Suling buka, wide & kendang.'},
+   {name:'VERSE',from:4,to:12,pref:[2,3],maxHold:8,col:['#ff2c8a','#ff8a2c'],tip:'Fokus biduan & kendang.'},
+   {name:'PRE-REFF',from:12,to:16,pref:[2,3,1],maxHold:4,col:['#c22cff','#ff2c6a'],tip:'Kendang makin rapat, ikutin!'},
+   {name:'REFF',from:16,to:24,pref:[4,1,2],maxHold:4,col:['#ffe23c','#ff2c2c'],tip:'Penonton joget! Crowd & wide.'},
+   {name:'JOGET',from:24,to:32,pref:[1,2,3,4],maxHold:2,col:['#2cffd2','#ff2cc8'],tip:'Breakdown! Cut tiap 2 ketuk.'},
+   {name:'OUTRO',from:32,to:36,pref:[1],maxHold:16,col:['#ff6a2c','#ffffff'],tip:'Pelan-pelan, tutup di wide.'}],
+  moments:[
+   {beat:40,cam:2,short:'CENGKOK',desc:'biduan mau cengkok panjang, siap close-up!'},
+   {beat:64,cam:4,short:'JOGET MASSAL',desc:'REFF masuk, penonton joget massal, ambil CROWD!'},
+   {beat:80,cam:1,short:'GOYANG BARENG',desc:'satu panggung goyang bareng, ambil WIDE!'},
+   {beat:104,cam:3,short:'KENDANG SOLO',desc:'KENDANG SOLO! ambil KENDANG & tahan!',hold:7},
+   {beat:140,cam:1,short:'DUNG-TAK!',desc:'hit terakhir, tutup di WIDE!'}],
+  repos:[{cam:2,from:26,to:33},{cam:4,from:50,to:57},{cam:1,from:70,to:77},{cam:3,from:116,to:122}]},
+ ballad:{id:'ballad',group:'BALLAD',title:'Slow Burn',genre:'BALLAD',bpm:72,bars:25,play:playBallad,style:'ballad',diff:'SUSAH (BENERAN)',
+  trains:'Sabar. Cut jarang, tapi tiap cut harus bermakna.',
+  cams:{1:'WIDE',2:'VOKAL CU',3:'GITAR AKUSTIK',4:'CROWD'},
+  fx:{high:[23,30],phones:[[32,56],[72,100]],solo:[56,64],keychange:72,finalCU:92},
+  sections:[
+   {name:'INTRO',from:0,to:2,pref:[1,3],maxHold:8,minHold:4,col:['#ff9a4a','#ffd29a'],tip:'Piano masuk. Pelan, jangan buru-buru.'},
+   {name:'VERSE',from:2,to:8,pref:[2,3],maxHold:12,minHold:6,col:['#ff7a3a','#ffb46a'],tip:'Tahan shot. Biarkan bernapas.'},
+   {name:'CHORUS',from:8,to:14,pref:[1,2,4],maxHold:8,minHold:4,col:['#ffc84a','#ff6a8a'],tip:'Buka sedikit, tetap tenang.'},
+   {name:'BRIDGE',from:14,to:18,pref:[3,2],maxHold:12,minHold:6,col:['#8a6aff','#ff9ad2'],tip:'Gitar akustik bicara.'},
+   {name:'CHORUS AKHIR',from:18,to:23,pref:[4,1,2],maxHold:8,minHold:4,col:['#ffe08a','#ff5a5a'],tip:'Naik nada! Paling emosional.'},
+   {name:'OUTRO',from:23,to:25,pref:[2],maxHold:16,minHold:4,col:['#ffb46a','#ffffff'],tip:'Tutup di wajah, bukan wide.'}],
+  moments:[
+   {beat:24,cam:2,short:'NADA TINGGI',desc:'vokalis narik nada tinggi, siap close-up!'},
+   {beat:32,cam:4,short:'LAUTAN LAMPU HP',desc:'chorus masuk, penonton nyalain HP, ambil CROWD!'},
+   {beat:56,cam:3,short:'SOLO AKUSTIK',desc:'solo gitar akustik, ambil GITAR & tahan!',hold:8},
+   {beat:72,cam:1,short:'NAIK NADA',desc:'key change di chorus akhir, buka WIDE!'},
+   {beat:92,cam:2,short:'NADA TERAKHIR',desc:'nada terakhir, tutup di CLOSE-UP vokal (bukan wide)!'}],
+  repos:[{cam:3,from:12,to:20},{cam:1,from:40,to:47},{cam:4,from:60,to:67},{cam:3,from:78,to:85}]},
+ neon:{id:'neon',group:'EDM',title:'Neon Bloom',genre:'FUTURE BASS',bpm:140,bars:36,play:playNeon,style:'edm',diff:'SEDANG',
+  trains:'Half-time: kick-nya jarang, tapi ketukannya tetap rapat.',cams:CAMS_STD,
+  fx:{high:[39,46],confetti:[64,80],solo:[96,104],point:[111,118],final:140},
+  sections:[
+   {name:'INTRO',from:0,to:4,pref:[1,4],maxHold:8,col:['#7a5cff','#ff7ad9'],tip:'Chord manis. Wide & crowd.'},
+   {name:'VERSE',from:4,to:12,pref:[2,3],maxHold:8,col:['#ff7ad9','#7ad9ff'],tip:'Close-up, santai.'},
+   {name:'BUILD',from:12,to:16,pref:[2,1],maxHold:4,col:['#ffffff','#ff7ad9'],tip:'Snare makin rapat, ikutin!'},
+   {name:'DROP',from:16,to:24,pref:[1,2,3,4],maxHold:2,col:['#ff5ad2','#5ae1ff'],tip:'Chord dicacah! Cut tiap 2 ketuk.'},
+   {name:'BREAKDOWN',from:24,to:28,pref:[3,2],maxHold:8,col:['#9a7aff','#ffd27a'],tip:'Napas dulu. Gitar ambil alih.'},
+   {name:'DROP 2',from:28,to:35,pref:[1,2,3,4],maxHold:2,col:['#5affc8','#ff5ad2'],tip:'Drop terakhir, habisin!'},
+   {name:'OUTRO',from:35,to:36,pref:[1],maxHold:16,col:['#ffffff','#ff7ad9'],tip:'Hit terakhir di wide.'}],
+  moments:[
+   {beat:40,cam:2,short:'VOCAL CHOP',desc:'vokal panjang masuk, siap close-up!'},
+   {beat:64,cam:1,short:'CONFETTI',desc:'DROP + confetti, ambil WIDE!'},
+   {beat:96,cam:3,short:'SOLO GITAR',desc:'breakdown, gitar solo, ambil & tahan!',hold:7},
+   {beat:112,cam:4,short:'DROP 2',desc:'drop kedua, penonton loncat, ambil CROWD!'},
+   {beat:140,cam:1,short:'HIT TERAKHIR',desc:'hit terakhir, tutup di WIDE!'}],
+  repos:[{cam:2,from:26,to:33},{cam:4,from:50,to:57},{cam:1,from:84,to:90},{cam:3,from:118,to:124}]},
+ basement:{id:'basement',group:'EDM',title:'Basement 128',genre:'TECHNO',bpm:128,bars:36,play:playBasement,style:'edm',diff:'SUSAH',
+  trains:'Repetitif & hipnotis. Perubahannya halus, harus dirasain.',cams:CAMS_STD,
+  fx:{high:[47,54],point:[79,86],solo:[104,112],final:140},
+  sections:[
+   {name:'INTRO',from:0,to:4,pref:[1,4],maxHold:8,col:['#ff2b3a','#3a1a6a'],tip:'Cuma kick. Gelap. Wide.'},
+   {name:'GROOVE',from:4,to:12,pref:[3,4],maxHold:8,col:['#ff2b3a','#2b6aff'],tip:'Acid pelan. Gitar & crowd.'},
+   {name:'BREAK',from:12,to:16,k:'build',pref:[2,1],maxHold:4,col:['#6a2bff','#ff2b3a'],tip:'Kick hilang. Tahan napas.'},
+   {name:'PEAK',from:16,to:24,k:'big',pref:[1,4,2],maxHold:4,col:['#ff2b3a','#ffffff'],tip:'Kick balik! Wide & crowd.'},
+   {name:'ACID',from:24,to:32,k:'drop',pref:[1,2,3,4],maxHold:2,col:['#c8ff2b','#ff2b3a'],tip:'Acid ngamuk. Cut tiap 2 ketuk.'},
+   {name:'OUTRO',from:32,to:36,pref:[1],maxHold:16,col:['#ff2b3a','#3a1a6a'],tip:'Turunin, tutup di wide.'}],
+  moments:[
+   {beat:48,cam:2,short:'VOCAL SAMPLE',desc:'sample vokal masuk, close-up!'},
+   {beat:64,cam:1,short:'KICK BALIK',desc:'kick balik, ambil WIDE!'},
+   {beat:80,cam:4,short:'TANGAN DI ATAS',desc:'semua angkat tangan, ambil CROWD!'},
+   {beat:104,cam:3,short:'ACID SOLO',desc:'acid solo, ambil GITAR & tahan!',hold:7},
+   {beat:140,cam:1,short:'HIT TERAKHIR',desc:'hit terakhir, tutup di WIDE!'}],
+  repos:[{cam:2,from:20,to:27},{cam:1,from:52,to:58},{cam:4,from:68,to:75},{cam:3,from:118,to:124}]},
+ jaranan:{id:'jaranan',group:'KOPLO',title:'Jaranan Gas Pol',genre:'KOPLO JARANAN',bpm:140,bars:36,play:playJaranan,style:'koplo',diff:'SUSAH',
+  trains:'Paling kencang. Kendang jaranan + slompret + gong.',cams:{1:'WIDE',2:'BIDUAN CU',3:'KENDANG MS',4:'CROWD'},
+  fx:{high:[39,46],dance:[79,88],solo:[104,112],final:140,saweran:[64,80]},
+  sections:[
+   {name:'INTRO',from:0,to:4,pref:[1,3],maxHold:8,col:['#ff3c2c','#ffb02c'],tip:'Slompret & gong. Wide & kendang.'},
+   {name:'VERSE',from:4,to:12,pref:[2,3],maxHold:8,col:['#ffb02c','#2cff9a'],tip:'Biduan & kendang.'},
+   {name:'PRE-REFF',from:12,to:16,pref:[2,3,1],maxHold:4,col:['#ff2c6a','#ffd02c'],tip:'Rapatkan cut!'},
+   {name:'REFF',from:16,to:24,pref:[4,1,2],maxHold:4,col:['#ffe23c','#ff2c2c'],tip:'Joget massal! Crowd & wide.'},
+   {name:'JOGET',from:24,to:32,pref:[1,2,3,4],maxHold:2,col:['#2cffd2','#ff3c2c'],tip:'Kesurupan mode. Cut tiap 2 ketuk!'},
+   {name:'OUTRO',from:32,to:36,pref:[1],maxHold:16,col:['#ff3c2c','#ffffff'],tip:'Tutup di wide, tunggu GONG.'}],
+  moments:[
+   {beat:40,cam:2,short:'CENGKOK',desc:'biduan mau cengkok, siap close-up!'},
+   {beat:64,cam:4,short:'JOGET MASSAL',desc:'REFF masuk, ambil CROWD!'},
+   {beat:80,cam:1,short:'GOYANG BARENG',desc:'satu panggung goyang, ambil WIDE!'},
+   {beat:104,cam:3,short:'KENDANG SOLO',desc:'KENDANG SOLO! ambil & tahan!',hold:7},
+   {beat:140,cam:1,short:'GONG!',desc:'GONG terakhir, tutup di WIDE!'}],
+  repos:[{cam:4,from:26,to:33},{cam:2,from:50,to:57},{cam:1,from:70,to:77},{cam:3,from:116,to:122}]},
+ lawas:{id:'lawas',group:'KOPLO',title:'Dangdut Lawas',genre:'DANGDUT KLASIK',bpm:116,bars:32,play:playLawas,style:'koplo',cam3:'guitar',diff:'MUDAH–SEDANG',
+  trains:'Santai ala orkes lawas. Gitar melodi jadi bintangnya.',cams:{1:'WIDE',2:'BIDUAN CU',3:'GITAR MELODI',4:'CROWD'},
+  fx:{high:[27,34],saweran:[48,64],solo:[80,96],dance:[96,104],final:124},
+  sections:[
+   {name:'INTRO',from:0,to:4,pref:[1,3],maxHold:8,col:['#ff9a3c','#ffe08a'],tip:'Suling buka. Wide & gitar.'},
+   {name:'VERSE',from:4,to:12,pref:[2,3],maxHold:8,col:['#ff6a5a','#ffb03c'],tip:'Biduan & gitar.'},
+   {name:'REFF',from:12,to:20,pref:[4,1,2],maxHold:4,col:['#ffd23c','#ff3c6a'],tip:'Penonton goyang. Crowd & wide.'},
+   {name:'MELODI',from:20,to:24,pref:[3,2],maxHold:8,col:['#3cc8ff','#ffd23c'],tip:'Gitar melodi solo, tahan!'},
+   {name:'REFF 2',from:24,to:31,pref:[1,4,2],maxHold:4,col:['#ffe23c','#ff2c2c'],tip:'Reff terakhir, buka lebar.'},
+   {name:'OUTRO',from:31,to:32,pref:[1],maxHold:16,col:['#ff9a3c','#ffffff'],tip:'Dang-dut! Tutup di wide.'}],
+  moments:[
+   {beat:28,cam:2,short:'CENGKOK',desc:'biduan narik cengkok, siap close-up!'},
+   {beat:48,cam:4,short:'SAWERAN',desc:'REFF masuk, penonton nyawer, ambil CROWD!'},
+   {beat:80,cam:3,short:'GITAR MELODI',desc:'gitar melodi solo, ambil & tahan!',hold:8},
+   {beat:96,cam:1,short:'REFF TERAKHIR',desc:'reff terakhir, satu panggung, ambil WIDE!'},
+   {beat:124,cam:1,short:'DANG-DUT!',desc:'hit terakhir, tetap di WIDE!'}],
+  repos:[{cam:3,from:36,to:42},{cam:1,from:56,to:62},{cam:4,from:68,to:75},{cam:2,from:104,to:110}]},
+ senja:{id:'senja',group:'BALLAD',title:'Petik Senja',genre:'AKUSTIK',bpm:84,bars:24,play:playSenja,style:'ballad',diff:'SEDANG',
+  trains:'Intim & hangat. Petikan gitar jadi napas lagunya.',cams:{1:'WIDE',2:'VOKAL CU',3:'GITAR AKUSTIK',4:'CROWD'},
+  fx:{high:[27,34],phones:[[32,48],[64,88]],solo:[48,56],finalCU:88},
+  sections:[
+   {name:'INTRO',from:0,to:2,pref:[3,1],maxHold:8,minHold:4,col:['#ffb46a','#ffe0b0'],tip:'Petikan gitar. Pelan.'},
+   {name:'VERSE',from:2,to:8,pref:[2,3],maxHold:12,minHold:6,col:['#ff9a5a','#ffd29a'],tip:'Tahan shot. Biarkan bernapas.'},
+   {name:'CHORUS',from:8,to:12,pref:[1,2,4],maxHold:8,minHold:4,col:['#ffc84a','#ff8a6a'],tip:'Buka sedikit.'},
+   {name:'VERSE 2',from:12,to:16,pref:[3,2],maxHold:12,minHold:6,col:['#ff9a5a','#c8a0ff'],tip:'Gitar isi, ambil petikannya.'},
+   {name:'CHORUS AKHIR',from:16,to:22,pref:[4,1,2],maxHold:8,minHold:4,col:['#ffe08a','#ff6a6a'],tip:'Semua ikut nyanyi.'},
+   {name:'OUTRO',from:22,to:24,pref:[2],maxHold:16,minHold:4,col:['#ffb46a','#ffffff'],tip:'Tutup di wajah.'}],
+  moments:[
+   {beat:28,cam:2,short:'NADA TINGGI',desc:'vokalis narik nada tinggi, close-up!'},
+   {beat:32,cam:4,short:'LAMPU HP',desc:'chorus masuk, lampu HP nyala, ambil CROWD!'},
+   {beat:48,cam:3,short:'FILL GITAR',desc:'gitar isi melodi, ambil GITAR & tahan!',hold:6},
+   {beat:64,cam:1,short:'SEMUA NYANYI',desc:'chorus akhir, semua nyanyi, buka WIDE!'},
+   {beat:88,cam:2,short:'NADA TERAKHIR',desc:'nada terakhir, tutup di CLOSE-UP!'}],
+  repos:[{cam:1,from:12,to:19},{cam:4,from:40,to:46},{cam:3,from:58,to:63},{cam:2,from:70,to:76}]},
+ meledak:{id:'meledak',group:'BALLAD',title:'Meledak Pelan',genre:'POWER BALLAD',bpm:76,bars:28,play:playMeledak,style:'ballad',strobeOK:['CHORUS AKHIR'],diff:'SUSAH',
+  trains:'Mulai bisik, berakhir meledak. Tahu kapan harus nahan & kapan lepas.',cams:{1:'WIDE',2:'VOKAL CU',3:'GITAR MS',4:'CROWD'},
+  fx:{high:[23,30],phones:[[32,48],[64,104]],solo:[48,56],keychange:64,finalCU:104},
+  sections:[
+   {name:'INTRO',from:0,to:2,pref:[1,2],maxHold:8,minHold:4,col:['#6a8aff','#c8d2ff'],tip:'Piano sendirian. Tenang.'},
+   {name:'VERSE',from:2,to:8,pref:[2,3],maxHold:12,minHold:6,col:['#6a6aff','#ff9ad2'],tip:'Bisik-bisik. Tahan shot.'},
+   {name:'CHORUS',from:8,to:12,pref:[1,2,4],maxHold:8,minHold:4,col:['#ff9a6a','#ffd28a'],tip:'Mulai naik, tetap sabar.'},
+   {name:'BRIDGE',from:12,to:16,k:'build',pref:[3,2],maxHold:8,minHold:4,col:['#ff5a5a','#ffb03c'],tip:'Solo gitar, drum mulai bangun.'},
+   {name:'CHORUS AKHIR',from:16,to:24,pref:[1,4,2],maxHold:4,minHold:2,col:['#ffe23c','#ff2c2c'],tip:'MELEDAK! Boleh lebih cepat.'},
+   {name:'OUTRO',from:24,to:28,pref:[2],maxHold:16,minHold:4,col:['#6a8aff','#ffffff'],tip:'Sunyi lagi. Tutup di wajah.'}],
+  moments:[
+   {beat:24,cam:2,short:'NADA TINGGI',desc:'vokalis narik nada tinggi, close-up!'},
+   {beat:32,cam:4,short:'LAMPU HP',desc:'chorus masuk, lampu HP nyala, ambil CROWD!'},
+   {beat:48,cam:3,short:'SOLO GITAR',desc:'solo gitar distorsi, ambil & tahan!',hold:8},
+   {beat:64,cam:1,short:'MELEDAK',desc:'chorus akhir MELEDAK, buka WIDE!'},
+   {beat:104,cam:2,short:'NADA TERAKHIR',desc:'nada terakhir, tutup di CLOSE-UP!'}],
+  repos:[{cam:3,from:12,to:20},{cam:1,from:36,to:42},{cam:4,from:56,to:62},{cam:3,from:76,to:82}]}
+};
+let SONG,BPM,SPB,BARS,BEATS,SECTIONS,MOMENTS,REPOS,ICOM,CAMS,FX;
+let MODE='switch';
+const LOOKS=['WASH','BEAMS','STROBE','SPOT','BLACKOUT'];
+const LOOK_INFO={WASH:'warna penuh',BEAMS:'moving head nyapu',STROBE:'kedip putih',SPOT:'follow spot',BLACKOUT:'gelap total'};
+const ROLES=[{id:'switch',icon:'🎥',name:'Switcher',desc:'Pilih kamera, cut on-beat.'},{id:'light',icon:'💡',name:'Lighting Busker',desc:'Mainin lampu live ikut musik.'},{id:'caller',icon:'🎬',name:'Show Caller',desc:'Standby… GO!',soon:1},{id:'foh',icon:'🎚',name:'Mixer FOH',desc:'Jangan sampai feedback.',soon:1},{id:'gfx',icon:'📺',name:'Graphic Op',desc:'Lower third panik.',soon:1}];
+const kindOf=s=>s.k||(/^(PRE|BUILD)/.test(s.name)?'build':/^(DROP|JOGET)/.test(s.name)?'drop':/^(CHORUS|REFF)/.test(s.name)?'big':'calm');
+const strobeOK=sec=>SONG.style!=='ballad'||(SONG.strobeOK||[]).includes(sec.name);
+function lightPrefs(sec){const k=kindOf(sec);let p=k==='build'?['BEAMS','WASH']:k==='drop'?['STROBE','BEAMS']:k==='big'?['BEAMS','STROBE','WASH']:['WASH','SPOT'];
+ if(SONG.style==='ballad'){if(strobeOK(sec))return['STROBE','BEAMS','WASH'];p=p.filter(x=>x!=='STROBE');if(k==='big')p=['WASH','BEAMS'];if(k==='build'||sec.name==='BRIDGE')p=['SPOT','WASH']}return p}
+function buildLM(){const L=[],ballad=SONG.style==='ballad';
+ SONG.sections.forEach(s=>{const k=kindOf(s);if((k==='big'||k==='drop')&&s.from>0){const b=s.from*4,soft=ballad&&!(SONG.strobeOK||[]).includes(s.name);L.push({beat:b-1,looks:['BLACKOUT'],short:'BLACKOUT',desc:`BLACKOUT 1 ketuk sebelum ${s.name}, terus ${soft?'WASH/BEAMS':'STROBE/BEAMS'} pas masuk!`});L.push({beat:b,looks:soft?['WASH','BEAMS']:['STROBE','BEAMS'],short:s.name+' MELEDAK',quiet:1})}});
+ if(SONG.fx.high)L.push({beat:SONG.fx.high[0]+1,looks:['SPOT'],short:'SPOT VOKAL',desc:'nada tinggi, SPOT ke vokalis!'});
+ if(SONG.fx.solo)L.push({beat:SONG.fx.solo[0],looks:['SPOT'],short:'SPOT SOLO',desc:`solo ${SONG.style==='koplo'?'kendang':'gitar'}, SPOT & tahan!`,hold:SONG.style==='ballad'?8:7});
+ const fin=SONG.fx.final??SONG.fx.finalCU;L.push({beat:fin,looks:ballad?['SPOT']:['STROBE'],short:'HIT TERAKHIR',desc:ballad?'nada terakhir, SPOT ke vokalis!':'hit terakhir, STROBE!'});
+ return L.sort((a,b)=>a.beat-b.beat)}
+const sectionAt=b=>{const bar=Math.floor(b/4);if(bar<0)return SECTIONS[0];for(const s of SECTIONS)if(bar>=s.from&&bar<s.to)return s;return SECTIONS[SECTIONS.length-1]};
+const isRepo=(cam,b)=>REPOS.some(r=>r.cam===cam&&b>=r.from-0.5&&b<r.to);
+const inW=(w,b)=>w&&b>=w[0]&&b<w[1];
+
+// ================= DOM =================
+const camsEl=$('cams');const camCanvases=[];
+for(let i=1;i<=4;i++){const d=document.createElement('div');d.className='mon cam';d.dataset.cam=i;d.innerHTML=`<canvas></canvas><div class="lbl"></div><div class="mv">MOVING</div>`;d.addEventListener('pointerdown',e=>{e.preventDefault();S.pvw=i});camsEl.appendChild(d);camCanvases.push(d.querySelector('canvas'))}
+const camDivs=[...camsEl.children];
+let rdEls=[];
+$('pads').innerHTML=LOOKS.map((l,i)=>`<button class="pad" data-look="${l}"><kbd>${i+1}</kbd><b>${l}</b><span>${LOOK_INFO[l]}</span></button>`).join('');
+[...$('pads').children].forEach(p=>p.addEventListener('pointerdown',e=>{e.preventDefault();lightPress(p.dataset.look)}));
+const beatEls=[...$('beats').children];
+function loadSong(id){
+ SONG=SONGS[id];BPM=SONG.bpm;SPB=60/BPM;BARS=SONG.bars;BEATS=BARS*4;SECTIONS=SONG.sections;MOMENTS=MODE==='light'?buildLM():SONG.moments;REPOS=MODE==='light'?[]:SONG.repos;CAMS=SONG.cams;FX=SONG.fx;
+ ICOM=[{beat:-4,text:`Stand by… "${SONG.title}" LIVE. ${SECTIONS[0].tip}`,type:'info'}];
+ SECTIONS.forEach(s=>{if(s.from>0&&!(MODE==='light'&&MOMENTS.some(m=>m.beat===s.from*4-1)))ICOM.push({beat:s.from*4-4,text:MODE==='light'?`4 ketuk lagi ${s.name}. Look cocok: ${lightPrefs(s).join(' / ')}.`:`4 ketuk lagi masuk ${s.name}. ${s.tip}`,type:'info'})});
+ MOMENTS.forEach(m=>{if(!m.quiet)ICOM.push({beat:m.beat-4,text:m.cam?`Ready CAM ${m.cam}… ${m.desc}`:`Ready… ${m.desc}`,type:'moment'})});
+ REPOS.forEach(r=>{ICOM.push({beat:r.from-2,text:`CAM ${r.cam} reposisi! Jangan diambil.`,type:'warn'});ICOM.push({beat:r.to,text:`CAM ${r.cam} clear, aman diambil.`,type:'ok'})});
+ ICOM.sort((a,b)=>a.beat-b.beat);
+ camDivs.forEach((d,i)=>d.querySelector('.lbl').textContent=`${i+1} · ${CAMS[i+1]}`);
+ $('rd').innerHTML=SECTIONS.map(s=>`<div><b>${s.name}</b>bar ${s.from+1}–${s.to} · ${s.tip}</div>`).join('');
+ rdEls=[...$('rd').children];
+ document.body.classList.toggle('mode-light',MODE==='light');$('songTag').textContent=`${SONG.title.toUpperCase()} · ${SONG.bpm} BPM`;
+}
+
+// ================= STATE =================
+let S;
+function reset(){S={state:'menu',pgm:1,pvw:2,score:0,combo:0,maxCombo:0,hype:50,hold:0,lastCut:-99,look:'WASH',warned:false,perfect:0,good:0,off:0,haram:0,rushed:0,pref:0,cuts:0,momentsHit:0,mDone:new Set(),lastBeat:-6,ic:0,hypeSum:0,hypeN:0,missed:[]}}
+const songBeat=()=>(ac.currentTime-lat-T0)/SPB;
+const visBeat=()=>(S.state==='live'||S.state==='end')&&ac?songBeat():performance.now()/1000/SPB;
+const addHype=v=>{S.hype=Math.max(0,Math.min(100,S.hype+v))};
+const best=id=>{try{return +localStorage.getItem('lcob-best-'+MODE+'-'+id)||0}catch(e){return 0}};
+const saveBest=(id,v)=>{try{if(v>best(id))localStorage.setItem('lcob-best-'+MODE+'-'+id,v)}catch(e){}};
+
+function pop(main,cls,sub=''){const d=document.createElement('div');d.className='pop '+cls;d.innerHTML=`<b>${main}</b>${sub?`<span>${sub}</span>`:''}`;const j=$('judge');while(j.children.length>1)j.firstChild.remove();j.appendChild(d);setTimeout(()=>d.remove(),900)}
+function intercom(m){$('ticker').className='t-'+m.type;$('icText').textContent=m.text;const p=document.createElement('p');p.className=m.type;p.textContent=m.text;const log=$('log');log.prepend(p);while(log.children.length>8)log.lastChild.remove()}
+function flashRed(){const f=$('flash');f.style.transition='none';f.style.opacity=.55;requestAnimationFrame(()=>{f.style.transition='opacity .5s';f.style.opacity=0})}
+
+// ================= GAMEPLAY =================
+function take(){
+ const tb=$('take');tb.classList.add('press');setTimeout(()=>tb.classList.remove('press'),90);
+ if(S.state!=='live')return;
+ const b=songBeat();if(b<-.5)return;
+ if(S.pvw===S.pgm){pop('SUDAH DI PROGRAM','mut','pilih kamera lain dulu');return}
+ const nb=Math.round(b),dms=(b-nb)*SPB*1000,ad=Math.abs(dms);
+ const sec=sectionAt(b),held=b-S.lastCut;
+ const cam=S.pvw;S.pvw=S.pgm;S.pgm=cam;S.hold=0;S.warned=false;S.cuts++;S.lastCut=b;
+ if(isRepo(cam,b)){S.haram++;S.combo=0;addHype(-12);S.score=Math.max(0,S.score-150);flashRed();pop('CUT HARAM!','red',`CAM ${cam} lagi reposisi`);return}
+ let grade,pts;
+ if(ad<=70){grade='PERFECT';pts=100;S.perfect++}else if(ad<=140){grade='GOOD';pts=60;S.good++}else{S.off++;S.combo=0;addHype(-5);pop('OFF-BEAT','amb',`${dms>0?'telat ':'kecepetan '}${Math.round(ad)}ms`);return}
+ if(sec.minHold&&held<sec.minHold-.5&&b>0){S.rushed++;S.combo=0;addHype(-6);pop('BURU-BURU!','amb',`baru ${Math.max(0,Math.round(held))} ketuk, tahan minimal ${sec.minHold}`);return}
+ S.combo++;S.maxCombo=Math.max(S.maxCombo,S.combo);
+ const fit=sec.pref.includes(cam);if(fit)S.pref++;
+ const mult=Math.min(4,1+Math.floor(S.combo/5)*.5);
+ S.score+=Math.round((pts+(fit?40:0))*mult*(SONG.style==='ballad'?1.6:1));
+ addHype((grade==='PERFECT'?5:3)+(SONG.style==='ballad'?3:0)-(fit?0:4));
+ pop(grade+(mult>1?` ×${mult}`:''),grade==='PERFECT'?'grn':'wht',`${dms>=0?'+':''}${Math.round(dms)}ms${fit?'':' · shot kurang cocok buat '+sec.name}`);
+}
+function lightPress(look){
+ const pd=document.querySelector(`.pad[data-look="${look}"]`);if(pd){pd.classList.add('press');setTimeout(()=>pd.classList.remove('press'),90)}
+ if(S.state!=='live')return;const b=songBeat();if(b<-.5)return;
+ if(look===S.look){pop('SUDAH NYALA','mut',look);return}
+ const nb=Math.round(b),dms=(b-nb)*SPB*1000,ad=Math.abs(dms),sec=sectionAt(b);
+ S.look=look;S.hold=0;S.warned=false;S.cuts++;S.lastCut=b;
+ if(look==='STROBE'&&!strobeOK(sec)){S.haram++;S.combo=0;addHype(-12);S.score=Math.max(0,S.score-150);flashRed();pop('SALAH MOOD!','red','strobe di ballad?? penonton lagi mewek');return}
+ let grade,pts;
+ if(ad<=70){grade='PERFECT';pts=100;S.perfect++}else if(ad<=140){grade='GOOD';pts=60;S.good++}else{S.off++;S.combo=0;addHype(-5);pop('OFF-BEAT','amb',`${dms>0?'telat ':'kecepetan '}${Math.round(ad)}ms`);return}
+ S.combo++;S.maxCombo=Math.max(S.maxCombo,S.combo);
+ const fit=lightPrefs(sec).includes(look)||MOMENTS.some(m=>m.beat===nb&&m.looks.includes(look));if(fit)S.pref++;
+ const mult=Math.min(4,1+Math.floor(S.combo/5)*.5);
+ S.score+=Math.round((pts+(fit?40:0))*mult);addHype((grade==='PERFECT'?5:3)-(fit?0:4));
+ pop(grade+(mult>1?` ×${mult}`:''),grade==='PERFECT'?'grn':'wht',`${look} · ${dms>=0?'+':''}${Math.round(dms)}ms${fit?'':' · kurang cocok buat '+sec.name}`);
+}
+function onBeat(n){
+ while(ICOM[S.ic]&&ICOM[S.ic].beat<=n){intercom(ICOM[S.ic]);S.ic++}
+ if(n<0){if(n<-4)return;$('count').textContent=n===-1?'LIVE':String(-n-1);hat(ac.currentTime,.12);return}
+ if(n===0)$('count').textContent='';
+ S.hold++;S.hypeSum+=S.hype;S.hypeN++;
+ const sec=sectionAt(n);
+ const exempt=MOMENTS.some(m=>m.hold&&n>=m.beat&&n<m.beat+m.hold&&(MODE==='light'?m.looks.includes(S.look):S.pgm===m.cam));
+ if(MODE==='light'&&S.look==='BLACKOUT'&&S.hold>2){addHype(-4);if(!S.warned){S.warned=true;pop('PANGGUNG GELAP!','red','kelamaan blackout, nyalain lagi!')}}
+ else if(S.hold>(MODE==='light'?Math.ceil(sec.maxHold*1.5):sec.maxHold)&&!exempt){addHype(-2.5);if(!S.warned){S.warned=true;pop('KELAMAAN!','amb','penonton mulai bosen, cut!')}}
+}
+function checkMoments(b){
+ for(const m of MOMENTS){if(S.mDone.has(m.beat)||b<m.beat+.35)continue;S.mDone.add(m.beat);
+  if(MODE==='light'?m.looks.includes(S.look):S.pgm===m.cam){S.momentsHit++;S.score+=500;addHype(15);pop('MOMEN DAPET!','acc',m.short+' +500')}
+  else{S.missed.push(m.short);addHype(-10);pop('MOMEN LEWAT','red',m.short+' harusnya '+(m.cam?'CAM '+m.cam:m.looks.join('/')))}}
+}
+function start(){
+ initAudio();ac.resume();lat=(ac.outputLatency||0)+(ac.baseLatency||0);
+ reset();S.state='live';$('log').innerHTML='';$('count').textContent='';
+ T0=ac.currentTime+.4+4*SPB;nextStep=0;
+ clearInterval(schedTimer);schedTimer=setInterval(schedule,25);
+ $('overlay').classList.add('hide');$('hdr').classList.add('live');
+}
+function schedule(){const ahead=ac.currentTime+.12,total=BARS*16;while(nextStep<total&&T0+nextStep*SPB/4<ahead){SONG.play(nextStep,T0+nextStep*SPB/4);nextStep++}}
+function endGame(){
+ S.state='end';clearInterval(schedTimer);$('hdr').classList.remove('live');
+ const cuts=S.cuts||1,acc=(S.perfect+S.good*.6)/cuts,mom=S.momentsHit/MOMENTS.length,hy=S.hypeN?S.hypeSum/S.hypeN:0;
+ const minCuts=SONG.style==='ballad'?(MODE==='light'?5:6):(MODE==='light'?8:10);
+ let q=acc*.45+mom*.3+(hy/100)*.25-S.haram*.07-S.rushed*.04;if(S.cuts<minCuts)q=Math.min(q,.3);
+ const rank=q>=.85?'S':q>=.72?'A':q>=.58?'B':q>=.42?'C':'D';
+ const quips={S:'Director-nya siapa nih? Langsung rekrut buat tur nasional.',A:'Rapi. Klien senyum, EP tenang, crew bisa makan nasi kotak dengan damai.',B:'Aman, tapi masih ada momen yang lolos. Sekali lagi pasti naik.',C:'Penonton sih seneng, tapi suasana di OB van agak tegang.',D:'Hmm… besok shadowing dulu ya sama switcher senior.'};
+ const prevBest=best(SONG.id);saveBest(SONG.id,S.score);
+ $('rRank').textContent=rank;
+ $('rQuip').innerHTML=(S.cuts<minCuts?(MODE==='light'?'Lampunya kok diem aja? Ini konser, bukan lampu taman 😅':'Kamu lupa nge-cut ya? Ini siaran, bukan CCTV 😅'):quips[rank])+`<div class="note" style="margin-top:6px">${MODE==='light'?'Lighting Busker':'Switcher'} · ${SONG.title}${S.score>prevBest&&prevBest>0?' · <b style="color:var(--grn)">REKOR BARU!</b>':''}</div>`;
+ const avg=(BEATS*SPB/(S.cuts+1)).toFixed(1);
+ const cells=[['SKOR',S.score],['MAX COMBO',S.maxCombo],['MOMEN',`${S.momentsHit}/${MOMENTS.length}`],[MODE==='light'?'SALAH MOOD':'CUT HARAM',S.haram],['PERFECT',S.perfect],['GOOD',S.good],[SONG.style==='ballad'?'BURU-BURU':'OFF-BEAT',SONG.style==='ballad'?S.rushed:S.off],[MODE==='light'?'RATA² LOOK':'RATA² SHOT',avg+'s']];
+ $('rGrid').innerHTML=cells.map(c=>`<div><small>${c[0]}</small><b>${c[1]}</b></div>`).join('');
+ const tips=[];
+ if(S.off>S.perfect)tips.push(SONG.style==='koplo'?'<b>Timing:</b> jangan ngikutin "tak" kendang yang ganjil, kuncinya di "DUNG" dan kick. Cut-nya di ketukan utama, bukan di hiasan kendangnya.':'<b>Timing:</b> cut-mu lebih sering meleset dari ketukan. Tekan TAKE <i>bareng</i> kick, jangan nunggu kick-nya kedengeran dulu. Switcher yang bagus itu antisipasi, bukan reaksi.');
+ if(S.rushed)tips.push(`<b>Buru-buru:</b> ${S.rushed}× cut sebelum shot sempat bernapas. Di ballad, yang bikin penonton nangis justru shot yang ditahan.`);
+ if(S.missed.length)tips.push(`<b>Momen terlewat:</b> ${S.missed.join(', ')}. Begitu Director bilang "Ready", langsung taruh kamera itu di preview.`);
+ if(S.haram&&MODE==='light')tips.push('<b>Salah mood:</b> strobe di lagu ballad itu dosa besar. Lighting ikut emosi lagu, bukan cuma ketukannya.');
+ else if(S.haram)tips.push('<b>Cut haram:</b> lihat label MOVING sebelum TAKE. Di siaran beneran, ini yang bikin kamu dipanggil EP setelah show.');
+ if(S.cuts&&S.pref/S.cuts<.5)tips.push('<b>Pilihan shot:</b> banyak shot yang nggak cocok sama bagian lagunya. Cek rundown di kanan.');
+ if(!tips.length)tips.push('<b>Catatan:</b> bersih. Next level: coba lagu lain, aturan mainnya beda.');
+ $('rTips').innerHTML=tips.join('<br><br>');
+ $('menu').style.display='none';$('result').style.display='block';$('overlay').classList.remove('hide');
+}
+function showMenu(){S.state='menu';renderRoles();renderSongs();$('result').style.display='none';$('menu').style.display='block';$('overlay').classList.remove('hide')}
+let selected='koplo';
+function renderRoles(){
+ $('roles').innerHTML=ROLES.map(r=>`<button class="role${r.id===MODE?' sel':''}${r.soon?' soon':''}" data-id="${r.id}" ${r.soon?'disabled':''}><span class="ic">${r.icon}</span><b>${r.name}</b><span class="tr">${r.desc}</span>${r.soon?'<span class="meta">SEGERA</span>':''}</button>`).join('');
+ [...$('roles').children].forEach(el=>{if(!el.disabled)el.onclick=()=>{MODE=el.dataset.id;loadSong(selected);renderRoles();renderSongs()}});
+ document.querySelectorAll('[data-howto]').forEach(el=>el.style.display=el.dataset.howto===MODE?'':'none');
+}
+function renderSongs(){
+ $('songs').innerHTML=['EDM','KOPLO','BALLAD'].map(gp=>`<div class="gcol"><div class="gh">${gp}</div>`+Object.values(SONGS).filter(s=>s.group===gp).map(s=>`<button class="song${s.id===selected?' sel':''}" data-id="${s.id}"><span class="g">${s.genre} · ${s.bpm} BPM</span><b>${s.title}</b><span class="tr">${s.trains}</span><span class="meta">${s.diff}${best(s.id)?` · Rekor ${best(s.id)}`:''}</span></button>`).join('')+'</div>').join('');
+ [...$('songs').querySelectorAll('.song')].forEach(el=>el.onclick=()=>{selected=el.dataset.id;loadSong(selected);renderSongs()});
+}
+$('start').onclick=start;$('again').onclick=start;$('change').onclick=showMenu;
+$('take').addEventListener('pointerdown',e=>{e.preventDefault();take()});
+addEventListener('keydown',e=>{
+ if(e.repeat)return;const k=e.key;
+ if(MODE==='light'){const i=+k-1;if(i>=0&&i<5){lightPress(LOOKS[i]);e.preventDefault();return}if(k==='b'||k==='B'){lightPress('BLACKOUT');return}}
+ if(MODE==='switch'&&k>='1'&&k<='4'){S.pvw=+k;e.preventDefault()}
+ else if(k===' '||k==='Enter'){e.preventDefault();if(S.state==='live'){if(MODE==='switch')take()}else if(!$('overlay').classList.contains('hide'))start()}
+});
+
+// ================= DRAWING =================
+function beam(c,x,y,ang,len,w,col,a){c.save();c.translate(x,y);c.rotate(ang);const g=c.createLinearGradient(0,0,0,len);g.addColorStop(0,hexA(col,Math.min(1,a)));g.addColorStop(1,hexA(col,0));c.fillStyle=g;c.beginPath();c.moveTo(-2,0);c.lineTo(2,0);c.lineTo(w,len);c.lineTo(-w,len);c.closePath();c.fill();c.restore()}
+function glow(c,x,y,r,col,a){const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,hexA(col,a));g.addColorStop(1,hexA(col,0));c.fillStyle=g;c.fillRect(x-r,y-r,r*2,r*2)}
+function beams(c,W,H,t,o,n,y0,spread,len){if(o.EB===0)return;const EB=o.EB??o.E;c.save();c.globalCompositeOperation='lighter';const sp=o.style==='ballad'?.25:o.style==='koplo'?.8:1;
+ for(let i=0;i<n;i++){const x=W*(.08+.84*i/(n-1));let ang=Math.sin(t*(.5+o.big*.5)*sp*(o.look==='BEAMS'?1.8:1)+i*1.3)*spread+(o.drop?Math.sin(t*5+i*2)*.18:0);if(o.style==='koplo'&&o.big)ang+=(Math.floor(o.b)%2?.12:-.12);
+  const col=i%2?o.c1:o.c2;const a=(.06+.34*o.pulse*(o.big?1:.55)*(o.style==='ballad'&&o.look==='AUTO'?.4:1))*EB+.04;beam(c,x,y0,ang,len,len*.15,col,a);glow(c,x,y0,H*.06,col,Math.min(1,a*2.5))}
+ c.restore()}
+function arm(c,x,y,s,a){const l=s*.2,ex=x+Math.cos(a[0])*l,ey=y+Math.sin(a[0])*l,hx=ex+Math.cos(a[1])*l,hy=ey+Math.sin(a[1])*l;c.beginPath();c.moveTo(x,y);c.lineTo(ex,ey);c.lineTo(hx,hy);c.stroke();return[hx,hy]}
+function figure(c,x,y,s,o={}){
+ const hd=y-s*.9,sh=y-s*.76,hip=y-s*.42;c.lineCap='round';c.lineJoin='round';c.lineWidth=s*.075;
+ if(!o.seated){c.beginPath();c.moveTo(x-s*.05,hip);c.lineTo(x-s*.1+(o.hipX||0)*s,y);c.moveTo(x+s*.05,hip);c.lineTo(x+s*.1+(o.hipX||0)*s,y);c.stroke()}
+ c.beginPath();c.moveTo(x-s*.12,sh);c.lineTo(x+s*.12,sh);c.lineTo(x+s*.075,hip);c.lineTo(x-s*.075,hip);c.closePath();c.fill();
+ const hL=arm(c,x-s*.1,sh,s,o.aL||[1.75,1.6]),hR=arm(c,x+s*.1,sh,s,o.aR||[1.4,1.55]);
+ c.fillRect(x-s*.03,hd+s*.05,s*.06,s*.1);
+ c.beginPath();c.arc(x+(o.hx||0)*s,hd+(o.hy||0)*s,s*.085,0,7);c.fill();
+ if(o.hair){c.beginPath();c.ellipse(x+(o.hx||0)*s,hd+(o.hy||0)*s+s*.06,s*.1,s*.13,0,0,7);c.fill()}
+ return{hL,hR}}
+function silhouette(c,col,off,fn){c.save();c.translate(-off,-off*.6);c.fillStyle=c.strokeStyle=col;fn();c.restore();c.save();c.fillStyle=c.strokeStyle='#000';fn();c.restore()}
+function crowd(c,W,H,t,b,o,yb,n,r,rows){
+ const phonesOn=o.style==='ballad'&&(FX.phones||[]).some(w=>inW(w,b));
+ for(let row=rows-1;row>=0;row--){const k=Math.pow(.74,row),rr=r*k,y=yb-r*1.35*(1-k)/.26,cnt=Math.round(n/k);
+  for(let i=0;i<cnt;i++){const sd=rnd(i*7.3+row*131);let x=(i+.5+(sd-.5)*.7+(row%2)*.5)*W/cnt;
+   let jump=0,up=false;
+   if(o.style==='edm'){jump=(o.big?o.pulse*rr*.6*(sd>.35?1:.3):o.pulse*rr*.12)*o.E;up=(o.big&&sd>.35)||inW(FX.point,b)&&sd>.15||sd>.86||(o.drop&&sd>.2)}
+   else if(o.style==='koplo'){const sway=Math.sin(o.b*Math.PI+sd)*rr*(o.big?.7:.25)*o.E;x+=sway;jump=o.pulse*rr*.15*o.E;up=(o.big&&sd>.3)||inW(FX.dance,b)||sd>.9}
+   else{x+=Math.sin(t*1.1+i*.4)*rr*.35;up=phonesOn?sd>.25:sd>.9}
+   const hy=y-jump;c.fillStyle=c.strokeStyle='#000';
+   if(up){c.lineWidth=rr*.42;c.lineCap='round';const sw=o.style==='ballad'?Math.sin(t*1.1+i*.4)*rr*.9:Math.sin(t*3+i)*rr*.5;const hx=x+rr*1.1+sw,hhy=hy-rr*2.2-jump*.4;c.beginPath();c.moveTo(x+rr*.7,hy+rr*1.1);c.lineTo(hx,hhy);c.stroke();
+    if((sd>.66&&S.hype>25)||(phonesOn&&sd>.25)||(o.style==='koplo'&&inW(FX.saweran,b)&&sd>.5)){c.save();c.globalCompositeOperation='lighter';glow(c,hx,hhy-rr*.2,Math.min(rr*1.1,9),o.style==='ballad'?'#ffe6b0':'#ffffff',.75);c.restore();c.fillStyle='#000'}}
+   c.beginPath();c.ellipse(x,hy+rr*1.55,rr*1.45,rr*.95,0,0,7);c.fill();
+   c.beginPath();c.arc(x,hy,rr,0,7);c.fill()}}}
+function ledWall(c,x,y,w,h,t,b,o){c.save();c.globalCompositeOperation='lighter';const cols=18,rows=8,cw=w/cols,rh=h/rows,dim=o.style==='ballad'?.45:1;
+ for(let i=0;i<cols;i++)for(let j=0;j<rows;j++){let v=.5+.5*Math.sin(i*.55+t*2*(o.style==='ballad'?.3:1)+j*.5+Math.sin(t*.7)*3);if(o.drop)v=Math.max(v,o.pulse*(Math.abs(i-cols/2)<o.pulse*cols/2?1:0));if(o.style==='koplo'&&o.big)v=Math.max(v,((i+j+Math.floor(o.b))%3===0)?o.pulse:0);
+  c.fillStyle=hexA((i+j)%2?o.c1:o.c2,(.05+.3*v*(o.big?1:.5))*(o.EL??o.E)*dim);c.fillRect(x+i*cw+1,y+j*rh+1,cw-2,rh-2)}
+ c.restore()}
+function confetti(c,W,H,since){const pal=['#ff3cd2','#ffd23c','#3cffb4','#3cc8ff','#ffffff','#ff3c3c'];
+ for(let i=0;i<110;i++){const y=-H*.1+since*H*.085*(.6+rnd(i+3))-rnd(i+9)*H*.25;if(y>H||y<-20)continue;const x=rnd(i)*W+Math.sin(since*1.4+i)*W*.02;c.save();c.translate(x,y);c.rotate(since*2+i);c.fillStyle=pal[i%6];c.fillRect(-H*.008,-H*.004,H*.016,H*.008);c.restore()}}
+function drummer(c,x,y,s,o){const h=o.pulse;
+ figure(c,x,y-s*.08,s,{aL:[2.5,-2.6-h*1],aR:[.64,-.54+h*1]});
+ c.beginPath();c.arc(x,y-s*.16,s*.17,0,7);c.fill();
+ c.beginPath();c.ellipse(x-s*.25,y-s*.38,s*.1,s*.04,0,0,7);c.fill();c.beginPath();c.ellipse(x+s*.25,y-s*.36,s*.11,s*.045,0,0,7);c.fill();
+ c.lineWidth=s*.02;c.beginPath();c.moveTo(x-s*.42,y);c.lineTo(x-s*.42,y-s*.6);c.moveTo(x+s*.44,y);c.lineTo(x+s*.44,y-s*.66);c.stroke();
+ c.beginPath();c.ellipse(x-s*.42,y-s*.6,s*.16,s*.025,-.1,0,7);c.fill();c.beginPath();c.ellipse(x+s*.44,y-s*.66,s*.18,s*.025,.12,0,7);c.fill()}
+function guitarist(c,x,y,s,o,bang){const st=Math.sin(o.ph*Math.PI*(o.style==='ballad'?1:2))*.35;
+ figure(c,x,y,s,{aL:[2.5,3.5],aR:[1.9,2.5+st],hy:bang||0});
+ c.save();c.translate(x,y-s*.47);c.rotate(.35);c.beginPath();c.ellipse(0,0,s*.13,s*.09,0,0,7);c.fill();c.fillRect(-s*.5,-s*.018,s*.45,s*.036);c.fillRect(-s*.57,-s*.03,s*.08,s*.06);c.restore()}
+function kendangPlayer(c,x,y,s,o,solo){const rate=solo?4:2,ph=(o.b*rate)%1;const hitL=ph<.3,hitR=((o.b*rate+.5)%1)<.3;
+ figure(c,x,y,s,{seated:true,aL:[1.95,hitL?2.0:3.3],aR:[1.2,hitR?.88:-.15],hy:solo?o.pulse*.03:0});
+ c.beginPath();c.ellipse(x-s*.02,y-s*.36,s*.27,s*.11,0,0,7);c.fill();c.fillRect(x-s*.28,y-s*.36,s*.52,s*.12);c.beginPath();c.ellipse(x-s*.02,y-s*.24,s*.27,s*.06,0,0,7);c.fill();
+ c.beginPath();c.ellipse(x+s*.31,y-s*.42,s*.075,s*.05,0,0,7);c.fill();c.fillRect(x+s*.24,y-s*.42,s*.14,s*.1);
+ c.lineWidth=s*.06;c.beginPath();c.moveTo(x-s*.06,y-s*.42);c.lineTo(x-s*.2,y-s*.1);c.moveTo(x+s*.06,y-s*.42);c.lineTo(x+s*.2,y-s*.1);c.stroke()}
+function vocalist(c,x,y,s,t,b,o){const point=inW(FX.point,b),high=inW(FX.high,b),dance=inW(FX.dance,b);
+ const aR=point?[-.25,-.15]:high?[-.6,-.45]:(o.big&&o.style!=='ballad')?[-.9+Math.sin(t*3)*.2,-1.25]:dance?[.6+Math.sin(o.b*Math.PI)*.4,-.3]:[1.35,1.6];
+ const sx=(o.style==='koplo'&&(o.big||dance))?Math.sin(o.b*Math.PI)*s*.04:0;
+ const f=figure(c,x+sx,y,s,{aL:[1.25,-1.25],aR,hy:high?-.02:-o.pulse*.01*o.E,hair:o.style==='koplo',hipX:sx/s});
+ if(o.style==='koplo'){c.beginPath();c.moveTo(x+sx-s*.075,y-s*.42);c.lineTo(x+sx+s*.075,y-s*.42);c.lineTo(x+sx+s*.15+Math.sin(o.b*Math.PI)*s*.03,y-s*.05);c.lineTo(x+sx-s*.15+Math.sin(o.b*Math.PI)*s*.03,y-s*.05);c.closePath();c.fill()}
+ c.beginPath();c.arc(f.hL[0]+s*.01,f.hL[1]-s*.02,s*.03,0,7);c.fill()}
+function finalFlash(c,W,H,b,at){if(at!==undefined&&b>=at){c.save();c.globalCompositeOperation='lighter';c.fillStyle=`rgba(255,255,255,${Math.max(0,.6-(b-at)*.15)})`;c.fillRect(0,0,W,H);c.restore()}}
+const SCENES={
+ 1(c,W,H,t,b,o){
+  let g=c.createLinearGradient(0,0,0,H*.7);g.addColorStop(0,hexA(o.c2,.1*o.E));g.addColorStop(1,hexA(o.c1,.22*o.E+.12*o.pulse*(o.style==='ballad'?.3:1)));c.fillStyle=g;c.fillRect(-W*.2,0,W*1.4,H*.7);
+  ledWall(c,W*.22,H*.15,W*.56,H*.34,t,b,o);
+  beams(c,W,H,t,o,o.style==='ballad'?4:7,H*.07,o.style==='ballad'?.25:.55,H*1.1);
+  c.fillStyle='#000';c.fillRect(-W*.2,H*.045,W*1.4,H*.03);c.fillRect(-W*.2,H*.7,W*1.4,H*.5);
+  c.fillStyle=hexA(o.c1,.35*o.E);c.fillRect(-W*.2,H*.7,W*1.4,Math.max(1,H*.004));
+  silhouette(c,hexA(o.c1,.8),H*.004,()=>{drummer(c,W*.66,H*.67,H*.25,o);
+   if(o.cam3==='kendang')kendangPlayer(c,W*.3,H*.73,H*.36,o,inW(FX.solo,b));else guitarist(c,W*.3,H*.73,H*.42,o);
+   vocalist(c,W*.5,H*.74,H*.46,t,b,o)});
+  crowd(c,W,H,t,b,o,H*1.0,22,H*.055,2);
+  if(inW(FX.confetti,b))confetti(c,W,H,b-FX.confetti[0]);
+  if(FX.keychange!==undefined&&b>=FX.keychange&&b<FX.keychange+4){c.save();c.globalCompositeOperation='lighter';glow(c,W/2,H*.3,W*.6,'#ffe08a',.35*(1-(b-FX.keychange)/4));c.restore()}
+  finalFlash(c,W,H,b,FX.final);
+ },
+ 2(c,W,H,t,b,o){const high=inW(FX.high,b),point=inW(FX.point,b),fin=FX.finalCU!==undefined&&b>=FX.finalCU,cx=W*.5,hy=H*.42;
+  glow(c,cx,hy-H*.05,H*(.65+.15*o.pulse*(o.style==='ballad'?.3:1)+(high||fin?.25:0)),o.c1,.85*o.E);glow(c,cx,hy,H*.9,o.c2,.25*o.E);
+  beams(c,W,H,t,o,5,-H*.05,o.style==='ballad'?.3:.7,H*1.2);
+  if(high||fin){c.save();c.globalCompositeOperation='lighter';beam(c,cx,-H*.15,0,H*1.3,H*.35,'#ffffff',fin?.45:.35);c.restore()}
+  silhouette(c,hexA(high||fin?'#ffffff':o.c1,.9),H*.01,()=>{
+   const tilt=high?-.3:fin?-.15:Math.sin(t*1.3)*.06,sway=o.style==='koplo'&&o.big?Math.sin(o.b*Math.PI)*W*.02:0,X=cx+sway;
+   c.beginPath();c.ellipse(X,H*1.08,W*.3,H*.36,0,0,7);c.fill();
+   c.fillRect(X-H*.06,hy+H*.08,H*.12,H*.3);
+   c.save();c.translate(X,hy);c.rotate(tilt);c.beginPath();c.ellipse(0,0,H*.14,H*.18,0,0,7);c.fill();c.beginPath();c.ellipse(-H*.025,-H*.075,H*.165,H*.135,0,0,7);c.fill();
+   if(o.style==='koplo'){c.beginPath();c.ellipse(-H*.05,H*.08,H*.17,H*.26,.15,0,7);c.fill();c.beginPath();c.ellipse(H*.1,H*.12,H*.08,H*.2,-.1,0,7);c.fill()}
+   c.restore();
+   c.lineCap='round';c.lineWidth=H*.05;c.beginPath();c.moveTo(X+H*.06,hy+H*.18);c.lineTo(X+H*.13,hy+H*.5);c.stroke();
+   c.beginPath();c.arc(X+H*.045,hy+H*.15,H*.04,0,7);c.fill();c.beginPath();c.ellipse(X+H*.15,hy+H*.52,H*.065,H*.085,.2,0,7);c.fill();
+   if(point){c.lineWidth=H*.085;c.beginPath();c.moveTo(X-W*.18,H*.85);c.lineTo(X-W*.31,hy+H*.08);c.lineTo(X-W*.47,hy-H*.03);c.stroke()}});
+ },
+ 3(c,W,H,t,b,o){const solo=inW(FX.solo,b);
+  let g=c.createLinearGradient(0,0,W,H);g.addColorStop(0,hexA(o.c2,.25*o.E));g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.fillRect(-W*.2,-H*.2,W*1.4,H*1.4);
+  beams(c,W,H,t,o,5,-H*.05,o.style==='ballad'?.25:.5,H*1.2);
+  if(solo){c.save();c.globalCompositeOperation='lighter';const sp=o.style==='ballad'?'#ffe0b0':'#ffffff';beam(c,W*.52,-H*.15,0,H*1.4,H*.5,sp,(o.style==='ballad'?.4:.3+.3*o.pulse));glow(c,W*.52,H*.2,H*.5,sp,.25*(o.style==='ballad'?1:o.pulse));c.restore()}
+  const rim=hexA(solo?'#ffffff':o.c1,.9);
+  if(o.cam3==='kendang')silhouette(c,rim,H*.01,()=>kendangPlayer(c,W*.5,H*1.12,H*1.05,o,solo));
+  else{const bang=solo&&o.style!=='ballad'?o.pulse*.035:Math.sin(t*2)*.005;silhouette(c,rim,H*.01,()=>guitarist(c,W*.54,H*1.28,H*1.25,o,bang))}
+ },
+ 4(c,W,H,t,b,o){
+  let g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,'#020203');g.addColorStop(.4,hexA(o.c1,.2*o.E+.08*o.pulse*(o.style==='ballad'?.3:1)));g.addColorStop(1,'#000');c.fillStyle=g;c.fillRect(-W*.2,-H*.2,W*1.4,H*1.4);
+  c.save();c.globalCompositeOperation='lighter';const sp=o.style==='ballad'?.25:1;for(let i=0;i<5;i++)beam(c,W*(.1+.2*i),H*1.1,Math.PI+Math.sin(t*.7*sp+i*1.7)*.55,H*1.4,H*.22,i%2?o.c1:o.c2,(.05+.22*o.pulse*(o.big?1:.5)*(o.style==='ballad'?.4:1))*o.E+.03);c.restore();
+  crowd(c,W,H,t,b,o,H*1.02,7,H*.11,6);
+  if(inW(FX.confetti,b))confetti(c,W,H,b-FX.confetti[0]);
+ }
+};
+function drawScene(c,cam,W,H,t,b){
+ const sec=sectionAt(Math.max(0,b)),ph=((b%1)+1)%1,pulse=Math.exp(-ph*5),E=.4+.6*S.hype/100;
+const look=MODE==='light'?S.look:'AUTO';let EW=E,EB=E,EL=E;
+ if(look==='WASH'){EW=E*1.5;EB=E*.12;EL=E*.9}else if(look==='BEAMS'){EW=E*.35;EB=E*1.7;EL=E*.4}else if(look==='STROBE'){EW=E*.15;EB=E*.25;EL=E*.15}else if(look==='SPOT'){EW=E*.12;EB=0;EL=0}else if(look==='BLACKOUT'){EW=.02;EB=0;EL=0}
+ const o={look,EB,EL,b,sec,ph,pulse,E:EW,style:SONG.style,big:['big','drop'].includes(kindOf(sec)),drop:kindOf(sec)==='drop',cam3:SONG.cam3||(SONG.style==='koplo'?'kendang':'guitar'),c1:sec.col[0],c2:sec.col[1]};
+ c.save();c.fillStyle='#040406';c.fillRect(0,0,W,H);
+ const repo=S.state!=='menu'&&isRepo(cam,b);
+ let dx=Math.sin(t*.7+cam)*W*.005,dy=Math.cos(t*.9+cam*2)*H*.006;
+ if(repo){dx+=Math.sin(t*2.6+cam)*W*.14;dy+=Math.sin(t*1.7)*H*.06}
+ c.translate(dx,dy);if(repo)c.filter=`blur(${Math.max(2,W/90)}px)`;
+SCENES[cam](c,W,H,t,b,o);
+ c.restore();c.filter='none';
+ if(look==='STROBE'){const f=((b*4)%1+1)%1;if(f<.3){c.save();c.globalCompositeOperation='lighter';c.fillStyle=`rgba(255,255,255,${.55*(1-f/.3)})`;c.fillRect(0,0,W,H);c.restore()}}
+ if(look==='SPOT'){const solo=inW(FX.solo,b);const tg={1:solo&&SONG.style!=='edm'&&SONG.style!=='ballad'?[W*.3,H*.72,H*.17]:solo?[W*.3,H*.72,H*.17]:[W*.5,H*.73,H*.16],2:[W*.5,H*.9,H*.45],3:[W*.53,H*1.1,H*.5]}[cam];
+  if(tg){c.save();c.globalCompositeOperation='lighter';beam(c,tg[0],-H*.1,0,tg[1]+H*.1,tg[2],'#fff3d6',.3);glow(c,tg[0],tg[1]-tg[2]*.6,tg[2]*1.3,'#fff3d6',.22);c.restore()}}
+ if(look==='BLACKOUT'){c.fillStyle='rgba(0,0,0,.85)';c.fillRect(0,0,W,H)}
+ const vg=c.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,W*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.7)');c.fillStyle=vg;c.fillRect(0,0,W,H);
+}
+const ctxCache=new Map();
+function drawTo(cv,cam,t,b){const dpr=Math.min(devicePixelRatio||1,2);const w=Math.round(cv.clientWidth*dpr),h=Math.round(cv.clientHeight*dpr);if(!w||!h)return;
+ if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}
+ let c=ctxCache.get(cv);if(!c){c=cv.getContext('2d');ctxCache.set(cv,c)}
+ drawScene(c,cam,w,h,t,b)}
+
+// ================= LOOP =================
+function fmtTC(sec){sec=Math.max(0,sec);const f=Math.floor((sec%1)*25),s=Math.floor(sec)%60,m=Math.floor(sec/60);return`00:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}:${String(f).padStart(2,'0')}`}
+function hud(b){
+ $('score').textContent=S.score.toLocaleString('id-ID');const cb=$('combo');cb.textContent='x'+S.combo;cb.classList.toggle('hot',S.combo>=5);
+ $('hypeBar').style.width=S.hype+'%';$('tc').textContent=fmtTC(b*SPB);
+ const sec=sectionAt(Math.max(0,b)),si=SECTIONS.indexOf(sec);
+ rdEls.forEach((el,i)=>{el.classList.toggle('on',i===si&&b>=0);el.classList.toggle('done',i<si)});
+ const bi=b>=-4?((Math.floor(b)%4)+4)%4:-1,fr=((b%1)+1)%1;
+ beatEls.forEach((el,i)=>{el.classList.toggle('on',i===bi&&fr<.3);el.classList.toggle('one',i===0)});
+ const nx=SECTIONS[si+1];$('next').textContent=b<0?'':nx?`${nx.name} dalam ${Math.max(0,Math.ceil(nx.from*4-b))} ketuk`:'menuju akhir';
+}
+function frame(){
+ requestAnimationFrame(frame);
+ const t=performance.now()/1000,b=visBeat();
+ if(S.state==='live'){while(S.lastBeat<Math.floor(b)){S.lastBeat++;onBeat(S.lastBeat)}checkMoments(b);hud(b);if(b>=BEATS+1.5)endGame()}
+ if(MODE==='light'){$('pgmPre').textContent='STAGE';$('pgmName').textContent=`LOOK: ${S.look}`;$('pvwPre').textContent='CROWD CAM';$('pvwName').textContent='reaksi penonton';
+  document.querySelectorAll('.pad').forEach(p=>p.classList.toggle('on',p.dataset.look===S.look));
+  drawTo($('cPgm'),1,t,b);drawTo($('cPvw'),4,t,b);return}
+ $('pgmPre').textContent='PROGRAM';$('pvwPre').textContent='PREVIEW';
+ $('pgmName').textContent=`CAM ${S.pgm} ${CAMS[S.pgm]}`;$('pvwName').textContent=`CAM ${S.pvw} ${CAMS[S.pvw]}`;
+ const live=S.state==='live';
+ camDivs.forEach((d,i)=>{const n=i+1;d.classList.toggle('is-pgm',S.pgm===n);d.classList.toggle('is-pvw',S.pvw===n);d.classList.toggle('repo',live&&isRepo(n,b))});
+ $('mPvw').classList.toggle('repo',live&&isRepo(S.pvw,b));
+ drawTo($('cPgm'),S.pgm,t,b);drawTo($('cPvw'),S.pvw,t,b);camCanvases.forEach((cv,i)=>drawTo(cv,i+1,t,b));
+}
+reset();loadSong(selected);renderRoles();renderSongs();
+requestAnimationFrame(frame);
+})();
+
+</script>
+</body>
+</html>
