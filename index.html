@@ -153,6 +153,16 @@ body:not(.mode-light) #pads,body:not(.mode-light) .k-light{display:none}
 #menu .note{margin-top:8px}
 #songInfo{font-size:11.5px;color:var(--mut);margin:-4px 0 12px;min-height:16px}
 #songInfo b{color:var(--txt)}
+#overlay{padding:48px 16px!important}
+#songWrap.collapsed{display:none}
+#songWrap{margin-top:8px}
+.song-toggle{font-family:inherit;width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;background:#1c0f12;border:1px solid var(--red);border-radius:8px;padding:10px 12px;color:var(--txt);cursor:pointer;margin-bottom:12px}
+.song-toggle:hover{filter:brightness(1.15)}
+#songSel{display:flex;flex-direction:column;gap:2px;min-width:0}
+#songSel .g{font-size:9px;letter-spacing:.14em;color:var(--acc)}
+#songSel b{font-size:16px}
+#songSel .tr{font-size:11px;color:var(--mut)}
+.chev{font-size:10px;letter-spacing:.14em;color:var(--txt);white-space:nowrap;border:1px solid #3a3a44;border-radius:4px;padding:5px 8px}
 </style>
 </head>
 <body>
@@ -194,8 +204,8 @@ body:not(.mode-light) #pads,body:not(.mode-light) .k-light{display:none}
   <h3 class="step">1 · PILIH KURSI</h3>
   <div class="roles" id="roles"></div>
   <h3 class="step">2 · PILIH LAGU</h3>
-  <div class="songs" id="songs"></div>
-  <div id="songInfo"></div>
+  <button class="song-toggle" id="songToggle"><span id="songSel"></span><span class="chev" id="songChev">GANTI LAGU ▾</span></button>
+  <div id="songWrap" class="collapsed"><div class="songs" id="songs"></div></div>
   <ul data-howto="switch">
    <li><b>Tombol 1–4</b> (atau klik monitor) untuk pilih kamera ke PREVIEW, lalu <b>Spasi</b> untuk TAKE ke PROGRAM.</li>
    <li><b>Cut on-beat:</b> PERFECT (±70ms) atau GOOD (±140ms) bikin combo naik. Meleset, combo pecah.</li>
@@ -749,6 +759,8 @@ function endGame(){
 }
 function showMenu(){S.state='menu';renderRoles();renderSongs();$('result').style.display='none';$('menu').style.display='block';$('overlay').classList.remove('hide')}
 let selected='koplo';
+function setSongsOpen(v){$('songWrap').classList.toggle('collapsed',!v);$('songChev').textContent=v?'TUTUP ▴':'GANTI LAGU ▾'}
+$('songToggle').onclick=()=>setSongsOpen($('songWrap').classList.contains('collapsed'));
 function renderRoles(){
  $('roles').innerHTML=ROLES.map(r=>`<button class="role${r.id===MODE?' sel':''}${r.soon?' soon':''}" data-id="${r.id}" ${r.soon?'disabled':''}><span class="ic">${r.icon}</span><b>${r.name}</b><span class="tr">${r.desc}</span>${r.soon?'<span class="meta">SEGERA</span>':''}</button>`).join('');
  [...$('roles').children].forEach(el=>{if(!el.disabled)el.onclick=()=>{MODE=el.dataset.id;loadSong(selected);renderRoles();renderSongs()}});
@@ -756,8 +768,8 @@ function renderRoles(){
 }
 function renderSongs(){
  $('songs').innerHTML=['EDM','KOPLO','BALLAD'].map(gp=>`<div class="gcol"><div class="gh">${gp}</div>`+Object.values(SONGS).filter(s=>s.group===gp).map(s=>`<button class="song${s.id===selected?' sel':''}" data-id="${s.id}"><span class="g">${s.genre} · ${s.bpm} BPM</span><b>${s.title}</b><span class="tr">${s.trains}</span><span class="meta">${s.diff}${best(s.id)?` · Rekor ${best(s.id)}`:''}</span></button>`).join('')+'</div>').join('');
- [...$('songs').querySelectorAll('.song')].forEach(el=>el.onclick=()=>{selected=el.dataset.id;loadSong(selected);renderSongs()});
- $('songInfo').innerHTML=`<b>${SONGS[selected].title}:</b> ${SONGS[selected].trains}`;
+ [...$('songs').querySelectorAll('.song')].forEach(el=>el.onclick=()=>{selected=el.dataset.id;loadSong(selected);setSongsOpen(false);renderSongs()});
+ const cs=SONGS[selected];$('songSel').innerHTML=`<span class="g">${cs.genre} · ${cs.bpm} BPM · ${cs.diff}</span><b>${cs.title}</b><span class="tr">${cs.trains}${best(cs.id)?` · Rekor ${best(cs.id)}`:''}</span>`;
 }
 $('start').onclick=start;$('again').onclick=start;$('change').onclick=showMenu;
 $('take').addEventListener('pointerdown',e=>{e.preventDefault();take()});
