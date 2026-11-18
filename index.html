@@ -641,12 +641,12 @@ const kindOf=s=>s.k||(/^(PRE|BUILD)/.test(s.name)?'build':/^(DROP|JOGET)/.test(s
 const strobeOK=sec=>SONG.style!=='ballad'||(SONG.strobeOK||[]).includes(sec.name);
 function lightPrefs(sec){const k=kindOf(sec);let p=k==='build'?['BEAMS','WASH']:k==='drop'?['STROBE','BEAMS']:k==='big'?['BEAMS','STROBE','WASH']:['WASH','SPOT'];
  if(SONG.style==='ballad'){if(strobeOK(sec))return['STROBE','BEAMS','WASH'];p=p.filter(x=>x!=='STROBE');if(k==='big')p=['WASH','BEAMS'];if(k==='build'||sec.name==='BRIDGE')p=['SPOT','WASH']}return p}
-function buildLM(){const L=[],ballad=SONG.style==='ballad';
- SONG.sections.forEach(s=>{const k=kindOf(s);if((k==='big'||k==='drop')&&s.from>0){const b=s.from*4,soft=ballad&&!(SONG.strobeOK||[]).includes(s.name);L.push({beat:b-1,looks:['BLACKOUT'],short:'BLACKOUT',desc:L(`BLACKOUT 1 ketuk sebelum ${s.name}, terus ${soft?'WASH/BEAMS':'STROBE/BEAMS'} pas masuk!`,`BLACKOUT 1 beat before ${tr(s.name)}, then ${soft?'WASH/BEAMS':'STROBE/BEAMS'} as it hits!`)});L.push({beat:b,looks:soft?['WASH','BEAMS']:['STROBE','BEAMS'],short:L(s.name+' MELEDAK',tr(s.name)+' HITS'),quiet:1})}});
- if(SONG.fx.high)L.push({beat:SONG.fx.high[0]+1,looks:['SPOT'],short:'SPOT VOKAL',desc:'nada tinggi, SPOT ke vokalis!'});
- if(SONG.fx.solo)L.push({beat:SONG.fx.solo[0],looks:['SPOT'],short:'SPOT SOLO',desc:L(`solo ${SONG.cam3==='guitar'||SONG.style!=='koplo'?'gitar':'kendang'}, SPOT & tahan!`,`${SONG.cam3==='guitar'||SONG.style!=='koplo'?'guitar':'kendang'} solo, SPOT & hold!`),hold:SONG.style==='ballad'?8:7});
- const fin=SONG.fx.final??SONG.fx.finalCU;L.push({beat:fin,looks:ballad?['SPOT']:['STROBE'],short:'HIT TERAKHIR',desc:ballad?L('nada terakhir, SPOT ke vokalis!','last note, SPOT the singer!'):L('hit terakhir, STROBE!','final hit, STROBE!')});
- return L.sort((a,b)=>a.beat-b.beat)}
+function buildLM(){const LM=[],ballad=SONG.style==='ballad';
+ SONG.sections.forEach(s=>{const k=kindOf(s);if((k==='big'||k==='drop')&&s.from>0){const b=s.from*4,soft=ballad&&!(SONG.strobeOK||[]).includes(s.name);LM.push({beat:b-1,looks:['BLACKOUT'],short:'BLACKOUT',desc:L(`BLACKOUT 1 ketuk sebelum ${s.name}, terus ${soft?'WASH/BEAMS':'STROBE/BEAMS'} pas masuk!`,`BLACKOUT 1 beat before ${tr(s.name)}, then ${soft?'WASH/BEAMS':'STROBE/BEAMS'} as it hits!`)});LM.push({beat:b,looks:soft?['WASH','BEAMS']:['STROBE','BEAMS'],short:L(s.name+' MELEDAK',tr(s.name)+' HITS'),quiet:1})}});
+ if(SONG.fx.high)LM.push({beat:SONG.fx.high[0]+1,looks:['SPOT'],short:'SPOT VOKAL',desc:'nada tinggi, SPOT ke vokalis!'});
+ if(SONG.fx.solo)LM.push({beat:SONG.fx.solo[0],looks:['SPOT'],short:'SPOT SOLO',desc:L(`solo ${SONG.cam3==='guitar'||SONG.style!=='koplo'?'gitar':'kendang'}, SPOT & tahan!`,`${SONG.cam3==='guitar'||SONG.style!=='koplo'?'guitar':'kendang'} solo, SPOT & hold!`),hold:SONG.style==='ballad'?8:7});
+ const fin=SONG.fx.final??SONG.fx.finalCU;LM.push({beat:fin,looks:ballad?['SPOT']:['STROBE'],short:'HIT TERAKHIR',desc:ballad?L('nada terakhir, SPOT ke vokalis!','last note, SPOT the singer!'):L('hit terakhir, STROBE!','final hit, STROBE!')});
+ return LM.sort((a,b)=>a.beat-b.beat)}
 const sectionAt=b=>{const bar=Math.floor(b/4);if(bar<0)return SECTIONS[0];for(const s of SECTIONS)if(bar>=s.from&&bar<s.to)return s;return SECTIONS[SECTIONS.length-1]};
 const isRepo=(cam,b)=>REPOS.some(r=>r.cam===cam&&b>=r.from-0.5&&b<r.to);
 const inW=(w,b)=>w&&b>=w[0]&&b<w[1];
