@@ -191,7 +191,7 @@ body:not(.mode-light) #pads,body:not(.mode-light) .k-light{display:none}
 .rcol{display:flex;flex-direction:column;gap:8px}
 .ytslot{aspect-ratio:16/9;background:#000;border:1px solid var(--line);border-radius:4px;display:none}
 body.mode-yt #ytSlot{display:block}
-#ytcard .ytslot{display:block;margin:6px 0 10px}
+#ytcard .ytslot{display:block;margin:6px auto 10px;max-width:520px}
 #ytHost{position:fixed;left:-9999px;top:0;width:320px;height:180px;z-index:4}
 #ytHost iframe{width:100%;height:100%;display:block;border:0}
 .ytsec{margin-top:10px}.beta{font-size:8px;color:var(--amb);border:1px solid var(--amb);border-radius:3px;padding:1px 4px;margin-left:4px;letter-spacing:.1em}
@@ -220,6 +220,12 @@ body.mode-yt #ytSlot{display:block}
 .mk button{background:none;border:0;color:var(--mut);cursor:pointer;font-family:inherit}
 .k-calm{color:#7a9aff}.k-build{color:#ff7ad9}.k-big{color:#ffd23c}.k-drop{color:#3cffb4}.k-m{color:var(--acc)}.k-e{color:var(--red)}
 #mTap.press{transform:translateY(2px)}
+.mcheck{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px;font-size:11px}
+.mcheck span{padding:5px 8px;border-radius:5px;border:1px solid var(--line)}
+.mcheck .ok{border-color:var(--grn);color:var(--grn)}.mcheck .todo{border-color:var(--amb);color:var(--amb)}.mcheck .wait{color:var(--mut)}
+.mcheck .arr{border:0;color:var(--mut);padding:0}.mcheck i{font-style:normal;opacity:.7}
+.btn.dim{opacity:.45}
+#mMsg{font-size:12px;line-height:1.5;margin-top:4px}
 </style>
 </head>
 <body>
@@ -304,7 +310,9 @@ body.mode-yt #ytSlot{display:block}
   <h1 style="font-size:24px" data-en="🎬 MAP A YOUTUBE SONG">🎬 MAPPING LAGU YOUTUBE</h1>
   <p class="sub" data-en="Teach the game where this song's beats and sections are. Takes 2 listens: one for tempo, one for structure.">Ajari game di mana ketukan dan bagian-bagian lagu ini. Butuh 2× dengar: sekali untuk tempo, sekali untuk struktur.</p>
   <div id="ytSlotMap" class="ytslot"></div>
-  <div class="ytbar"><button class="btn sm" id="mPlay" data-en="▶ / ❚❚ (SPACE)">▶ / ❚❚ (SPASI)</button><button class="btn ghost sm" id="mBack5">−5s</button><button class="btn ghost sm" id="mFwd5">+5s</button><span class="mtime" id="mTime">0:00</span><span class="mdot" id="mDot"></span></div>
+  <div class="mcheck" id="mCheck"></div>
+  <div class="note" id="mMsg"></div>
+  <div class="ytbar"><button class="btn sm" id="mPlay" data-en="▶ / ❚❚ (SPACE)">▶ / ❚❚ (SPASI)</button><button class="btn ghost sm" id="mRestart" data-en="⟲ FROM START">⟲ DARI AWAL</button><button class="btn ghost sm" id="mBack5">−5s</button><button class="btn ghost sm" id="mFwd5">+5s</button><span class="mtime" id="mTime">0:00</span><span class="mdot" id="mDot"></span><button class="btn sm" id="mSave2" style="margin-left:auto" data-en="✓ SAVE">✓ SIMPAN</button></div>
   <div class="ytstep"><b data-en="1 · INFO">1 · INFO</b>
    <div class="row"><input id="mTitle" placeholder="Judul lagu" data-ph-en="Song title"><div class="seg" id="mStyle"><button data-s="edm">EDM</button><button data-s="koplo">KOPLO</button><button data-s="ballad">BALLAD</button></div></div>
    <div class="note" data-en="Style decides the stage visuals & the rules (e.g. ballad = no strobe, no rushing).">Gaya menentukan visual panggung & aturan main (mis. ballad = nggak boleh strobe, nggak boleh buru-buru).</div></div>
@@ -315,7 +323,6 @@ body.mode-yt #ytSlot{display:block}
    <div class="note" data-en="Play from the start. When a section begins press: <kbd>1</kbd> CALM · <kbd>2</kbd> BUILD · <kbd>3</kbd> BIG · <kbd>4</kbd> DROP. <kbd>M</kbd> = key moment (solo, high note). <kbd>E</kbd> = end of song. <kbd>Z</kbd> = undo.">Putar dari awal. Saat sebuah bagian mulai, tekan: <kbd>1</kbd> TENANG · <kbd>2</kbd> BUILD · <kbd>3</kbd> RAMAI · <kbd>4</kbd> DROP. <kbd>M</kbd> = momen penting (solo, nada tinggi). <kbd>E</kbd> = akhir lagu. <kbd>Z</kbd> = undo.</div>
    <div id="mMarks"></div></div>
   <div class="calbtns"><button class="btn" id="mSave" data-en="✓ SAVE">✓ SIMPAN</button><button class="btn ghost" id="mCode" data-en="⧉ COPY CODE">⧉ SALIN KODE</button><button class="btn ghost" id="mClose" data-en="← BACK">← KEMBALI</button></div>
-  <div class="note" id="mMsg"></div>
  </div>
  <div class="card" id="result" style="display:none">
   <div class="res-head"><div class="rank" id="rRank">A</div><div><div class="note" style="margin:0 0 6px" data-en="BROADCAST REPORT">LAPORAN SIARAN</div><div class="quip" id="rQuip"></div></div></div>
@@ -1119,7 +1126,10 @@ const ytCode=m=>'LCOB1:'+btoa(unescape(encodeURIComponent(JSON.stringify(m))));
 const ytDecode=c=>{try{return JSON.parse(decodeURIComponent(escape(atob(c.trim().slice(6)))))}catch(e){return null}};
 // ---- lagu dari beatmap ----
 function ytSong(m){
- if(!m||!m.bpm||!m.marks||!m.marks.length)return null;const spb=60/m.bpm,st=m.style||'edm',bal=st==='ballad';
+ if(!m||!m.bpm)return null;const spb=60/m.bpm,st=m.style||'edm',bal=st==='ballad';
+ if(!m.marks||!m.marks.length){const tot=m.endBar!=null?m.endBar:(m.dur?Math.floor((m.dur-m.t0)/(4*spb))-1:48);const pat=bal?[['calm',8],['big',8],['calm',8],['build',4],['big',8]]:[['calm',8],['build',4],['big',8],['calm',8],['build',4],['big',8],['drop',8]];
+  const mk=[];let bar=0,i=0;while(bar<tot-2){const p=pat[i%pat.length];mk.push({bar,kind:p[0]});bar+=p[1];i++}m=Object.assign({},m,{marks:mk,endBar:tot,auto:true})}
+ if(m.endBar==null&&m.dur)m=Object.assign({},m,{endBar:Math.floor((m.dur-m.t0)/(4*spb))-1});
  const mk=[...m.marks].sort((a,b)=>a.bar-b.bar).filter((x,i,a)=>!i||x.bar!==a[i-1].bar);const b0=mk[0].bar;
  const endBar=Math.max((m.endBar??(mk[mk.length-1].bar+8)),mk[mk.length-1].bar+1)-b0;
  const PAL={calm:bal?['#ff9a5a','#ffd29a']:['#3a5cff','#9a3cff'],build:bal?['#8a6aff','#ff9ad2']:['#ff3cd2','#3cc8ff'],big:bal?['#ffc84a','#ff6a8a']:['#ffd23c','#ff3c3c'],drop:bal?['#ffe23c','#ff2c2c']:['#3cffb4','#ff3cf0']};
@@ -1137,7 +1147,7 @@ function ytSong(m){
  const repos=[];let rc=0;sections.forEach((x,i)=>{if(i===0||repos.length>=4||x.to-x.from<4)return;const f=x.from*4+4,t=f+6;for(let j=0;j<4;j++){const cam=[2,4,1,3][(rc+j)%4];if(!moments.some(mm=>mm.cam===cam&&mm.beat>=f-8&&mm.beat<=t+8)){repos.push({cam,from:f,to:t});rc++;break}}});
  const cams=st==='koplo'?{1:'WIDE',2:'BIDUAN CU',3:'GITAR MS',4:'CROWD'}:{1:'WIDE',2:'VOKAL CU',3:'GITAR MS',4:'CROWD'};
  return{id:'yt:'+m.vid,yt:true,vid:m.vid,t0:m.t0+b0*4*spb,group:'YOUTUBE',title:m.title||'YouTube',genre:'YOUTUBE · '+st.toUpperCase(),bpm:Math.round(m.bpm*10)/10,bars:endBar,play:()=>{},style:st,cam3:'guitar',diff:'CUSTOM',
-  trains:L('Lagu YouTube, struktur dari mapping kamu.','YouTube song, structure from your mapping.'),cams,fx:{},sections,moments,repos,ytMoments:moments.map(x=>x.beat)}}
+  trains:m.auto?L('Lagu YouTube, struktur otomatis (tandai bagian lagu lewat EDIT supaya lebih akurat).','YouTube song, automatic structure (mark sections via EDIT for accuracy).'):L('Lagu YouTube, struktur dari mapping kamu.','YouTube song, structure from your mapping.'),cams,fx:{},sections,moments,repos,ytMoments:moments.map(x=>x.beat)}}
 function ytRegister(m){const sg=ytSong(m);if(sg)SONGS[sg.id]=sg;return sg}
 function renderYtList(){const st=ytStore();const ks=Object.keys(st);
  $('ytList').innerHTML=ks.length?ks.map(v=>{const m=st[v],id='yt:'+v;return`<div class="ytitem${selected===id?' sel':''}" data-v="${v}"><button class="ytpick" data-v="${v}"><span class="g">YOUTUBE · ${(m.style||'edm').toUpperCase()} · ${m.bpm?Math.round(m.bpm*10)/10:'—'} BPM</span><b>${(m.title||v).replace(/</g,'&lt;')}</b></button><button class="ytact" data-ed="${v}">${L('EDIT','EDIT')}</button><button class="ytact" data-cp="${v}">${L('KODE','CODE')}</button><button class="ytact del" data-del="${v}">✕</button></div>`}).join(''):`<div class="note">${L('Belum ada lagu YouTube. Tempel link di atas, lalu klik + MAP LAGU.','No YouTube songs yet. Paste a link above and click + MAP SONG.')}</div>`;
@@ -1159,7 +1169,11 @@ function mapFit(){const t=MAP.taps;if(t.length<4)return;let d=[];for(let i=1;i<t
  const idx=[0];for(let i=1;i<t.length;i++)idx.push(idx[i-1]+Math.max(1,Math.round((t[i]-t[i-1])/med)));
  const n=t.length,mx=idx.reduce((a,b)=>a+b,0)/n,my=t.reduce((a,b)=>a+b,0)/n;let sxy=0,sxx=0;for(let i=0;i<n;i++){sxy+=(idx[i]-mx)*(t[i]-my);sxx+=(idx[i]-mx)**2}
  const per=sxy/sxx;MAP.bpm=60/per;MAP.t0=my-per*mx;MAP.nTap=n}
-function mapRender(){$('mBpm').innerHTML=MAP.bpm?`<b>${MAP.bpm.toFixed(1)}</b> BPM <span class="note">(${MAP.nTap||MAP.taps.length} tap)</span>`:`— BPM <span class="note">(${MAP.taps.length}/8)</span>`;
+function mapRender(){
+ const tOK=MAP.bpm&&(MAP.nTap||0)>=8,sOK=MAP.marks.length>0;
+ $('mCheck').innerHTML=`<span class="${tOK?'ok':'todo'}">${tOK?'✓':'1'} ${L('Kunci tempo (T × 8)','Lock tempo (T × 8)')}</span><span class="arr">→</span><span class="${sOK?'ok':tOK?'todo':'wait'}">${sOK?'✓':'2'} ${L('Tandai struktur','Mark structure')} <i>${L('(opsional)','(optional)')}</i></span><span class="arr">→</span><span class="${tOK?'todo':'wait'}">3 ${L('SIMPAN','SAVE')}</span>`;
+ $('mSave').classList.toggle('dim',!tOK);$('mSave2').classList.toggle('dim',!tOK);
+ if(tOK&&!sOK&&!MAP.toldStruct){MAP.toldStruct=1;$('mMsg').innerHTML=L('✅ <b>Tempo terkunci!</b> Sekarang kamu bisa langsung <b>SIMPAN</b> (struktur lagu dibuat otomatis), atau supaya lebih akurat: klik <b>⟲ DARI AWAL</b> lalu tekan <b>1–4</b> setiap bagian lagu berganti.','✅ <b>Tempo locked!</b> You can <b>SAVE</b> now (structure will be automatic), or for better accuracy: click <b>⟲ FROM START</b> and press <b>1–4</b> whenever a section changes.')}$('mBpm').innerHTML=MAP.bpm?`<b>${MAP.bpm.toFixed(1)}</b> BPM <span class="note">(${MAP.nTap||MAP.taps.length} tap)</span>`:`— BPM <span class="note">(${MAP.taps.length}/8)</span>`;
  const spb=MAP.bpm?60/MAP.bpm:0,fmt=x=>{x=Math.max(0,x);return Math.floor(x/60)+':'+String(Math.floor(x%60)).padStart(2,'0')};
  const KL={calm:L('TENANG','CALM'),build:'BUILD',big:L('RAMAI','BIG'),drop:'DROP'};
  const items=[...MAP.marks.map(x=>({t:MAP.t0+x.bar*4*spb,h:`<b class="k-${x.kind}">${KL[x.kind]}</b> · bar ${x.bar}`,del:'s'+x.bar})),...MAP.moments.map(b=>({t:MAP.t0+b*spb,h:`<b class="k-m">${L('MOMEN','MOMENT')}</b> · beat ${b}`,del:'m'+b}))];
@@ -1177,18 +1191,20 @@ function mapKey(e){if(document.activeElement===$('mTitle'))return false;const k=
  if(k===' '){e.preventDefault();mapToggle();return true}if(k==='t'){mapTap();return true}
  if(['1','2','3','4'].includes(k)){mapMark(['calm','build','big','drop'][+k-1]);return true}
  if(k==='m'){mapMark('m');return true}if(k==='e'){mapMark('e');return true}if(k==='z'){mapUndo();return true}return false}
-$('mPlay').onclick=mapToggle;$('mTap').addEventListener('pointerdown',e=>{e.preventDefault();mapTap()});
+$('mPlay').onclick=mapToggle;$('mRestart').onclick=()=>{if(!YT.ready)return;YT.player.seekTo(0,true);YT.player.playVideo()};$('mTap').addEventListener('pointerdown',e=>{e.preventDefault();mapTap()});
 $('mBack5').onclick=()=>YT.ready&&YT.player.seekTo(Math.max(0,ytNow()-5),true);$('mFwd5').onclick=()=>YT.ready&&YT.player.seekTo(ytNow()+5,true);
 $('mHalf').onclick=()=>{if(MAP.bpm){MAP.bpm/=2;mapRender()}};$('mDouble').onclick=()=>{if(MAP.bpm){MAP.bpm*=2;mapRender()}};
 $('mBpmM').onclick=()=>{if(MAP.bpm){MAP.bpm-=.5;mapRender()}};$('mBpmP').onclick=()=>{if(MAP.bpm){MAP.bpm+=.5;mapRender()}};
 $('mEarly').onclick=()=>{MAP.t0-=.01;mapRender()};$('mLate').onclick=()=>{MAP.t0+=.01;mapRender()};$('mTapReset').onclick=()=>{MAP.taps=[];MAP.bpm=0;MAP.nTap=0;mapRender()};
 $('mTitle').oninput=()=>{MAP.title=$('mTitle').value};
-function mapClean(){const m={vid:MAP.vid,title:MAP.title,style:MAP.style,bpm:MAP.bpm,t0:MAP.t0,marks:MAP.marks,moments:MAP.moments,endBar:MAP.endBar};return m}
-$('mSave').onclick=()=>{if(!MAP.bpm||!MAP.marks.length){$('mMsg').textContent=L('Belum lengkap: butuh tempo (tap T) dan minimal 1 tanda bagian (1–4).','Not complete yet: needs tempo (tap T) and at least 1 section mark (1–4).');return}
+function mapClean(){if(!MAP.dur)try{MAP.dur=YT.player.getDuration()}catch(e){}const m={vid:MAP.vid,title:MAP.title,style:MAP.style,bpm:MAP.bpm,t0:MAP.t0,marks:MAP.marks,moments:MAP.moments,endBar:MAP.endBar,dur:MAP.dur};return m}
+$('mSave').onclick=()=>{if(!MAP.bpm||(MAP.nTap||0)<8){$('mMsg').innerHTML=L('⚠️ Tempo belum terkunci: putar lagunya dan tekan <b>T</b> di setiap ketukan, minimal 8×.','⚠️ Tempo not locked yet: play the song and press <b>T</b> on every beat, at least 8×.');return}
  const o=ytStore();o[MAP.vid]=mapClean();ytSave(o);const sg=ytRegister(o[MAP.vid]);try{YT.player.pauseVideo()}catch(e){}selected=sg.id;loadSong(selected);$('ytcard').style.display='none';$('menu').style.display='block';setSongsOpen(false);renderSongs()};
+$('mSave2').onclick=()=>$('mSave').onclick();
 $('mCode').onclick=()=>{const c=ytCode(mapClean());try{navigator.clipboard.writeText(c).then(()=>$('mMsg').textContent=L('Kode tersalin!','Code copied!'),()=>$('mMsg').textContent=c)}catch(e){$('mMsg').textContent=c}};
 $('mClose').onclick=()=>{try{YT.player.pauseVideo()}catch(e){}$('ytcard').style.display='none';$('menu').style.display='block'};
 function mapFrame(){if(!MAP||$('ytcard').style.display!=='block'||!YT.ready)return;const t=ytNow();const fmt=x=>Math.floor(x/60)+':'+String(Math.floor(x%60)).padStart(2,'0');let st=-1;try{st=YT.player.getPlayerState()}catch(e){}
+ if(!MAP.dur)try{const d=YT.player.getDuration();if(d)MAP.dur=d}catch(e){}
  if(MAP.bpm){const spb=60/MAP.bpm,b=(t-MAP.t0)/spb,f=b-Math.floor(b);$('mTime').textContent=`${fmt(t)} · bar ${Math.floor(b/4)} · beat ${((Math.floor(b)%4)+4)%4+1}`;$('mDot').classList.toggle('on',st===1&&f<.18);$('mDot').classList.toggle('one',((Math.floor(b)%4)+4)%4===0);
   if($('mClick').checked&&st===1){const k=Math.ceil(b+.0001),tk=MAP.t0+k*spb;if(tk-t<.12&&MAP.lastClick!==k){MAP.lastClick=k;clickSnd(ac.currentTime+Math.max(0,tk-t),k%4===0)}}}
  else $('mTime').textContent=fmt(t)}
