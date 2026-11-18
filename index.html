@@ -851,7 +851,7 @@ function checkMoments(b){
 }
 function start(){
  initAudio();ac.resume();
- if(SONG.yt){if(!YT.ready){ytNote(L('Player YouTube belum siap. Fitur ini cuma jalan di versi GitHub (dilawafa.github.io), tunggu sebentar lalu coba lagi.','YouTube player not ready. This only works on the GitHub version, wait a moment and retry.'));setSongsOpen(true);return}
+ if(SONG.yt){if(!YT.ready){ytNote(L('Player YouTube belum siap. Fitur ini cuma jalan di versi GitHub (livecut-game.github.io), tunggu sebentar lalu coba lagi.','YouTube player not ready. This only works on the GitHub version, wait a moment and retry.'));setSongsOpen(true);return}
   lat=USER_OFF!==null?USER_OFF/1000:.03;reset();S.state='live';$('log').innerHTML='';$('count').textContent='';
   ytCue(SONG.vid,()=>{YT.player.seekTo(Math.max(0,SONG.t0-4*SPB),true);YT.player.playVideo()});
   clearInterval(schedTimer);$('overlay').classList.add('hide');$('hdr').classList.add('live');return}
@@ -1106,7 +1106,7 @@ const YT_={};const YT={ready:false,player:null,vid:null,aV:0,aP:0,lastV:-1,cueCb
 function ytNote(t){$('ytMsg').innerHTML=t}
 function ytId(u){u=(u||'').trim();let m=u.match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([A-Za-z0-9_-]{11})/);if(m)return m[1];if(/^[A-Za-z0-9_-]{11}$/.test(u))return u;return null}
 function ytLoadApi(){if(window.YT&&window.YT.Player){ytMake();return}window.onYouTubeIframeAPIReady=ytMake;const sc=document.createElement('script');sc.src='https://www.youtube.com/iframe_api';sc.onerror=()=>{YT.failed=true};document.head.appendChild(sc);
- setTimeout(()=>{if(!YT.ready){YT.failed=true;ytNote(L('⚠️ Player YouTube nggak bisa dimuat di sini. Fitur ini jalan di versi GitHub: <b>dilawafa.github.io/live-cut-on-the-beat</b>','⚠️ The YouTube player can\'t load here. Use the GitHub version: <b>dilawafa.github.io/live-cut-on-the-beat</b>'))}},8000)}
+ setTimeout(()=>{if(!YT.ready){YT.failed=true;ytNote(L('⚠️ Player YouTube nggak bisa dimuat di sini. Fitur ini jalan di versi GitHub: <b>livecut-game.github.io/live-cut-on-the-beat</b>','⚠️ The YouTube player can\'t load here. Use the GitHub version: <b>livecut-game.github.io/live-cut-on-the-beat</b>'))}},8000)}
 function ytMake(){if(YT.player)return;YT.player=new window.YT.Player('ytPlayer',{width:'100%',height:'100%',playerVars:{playsinline:1,rel:0,modestbranding:1,controls:1,disablekb:1},
  events:{onReady:()=>{YT.ready=true;ytNote('');if(YT.cueCb){const f=YT.cueCb;YT.cueCb=null;f()}},
   onStateChange:e=>{if(e.data===5||e.data===1){if(YT.cueCb){const f=YT.cueCb;YT.cueCb=null;f()}}},
