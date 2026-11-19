@@ -741,7 +741,7 @@ const SONGS={
   repos:[{cam:3,from:12,to:20},{cam:1,from:36,to:42},{cam:4,from:56,to:62},{cam:3,from:76,to:82}]}
 };
 let SONG,BPM,SPB,BARS,BEATS,SECTIONS,MOMENTS,REPOS,ICOM,CAMS,FX;
-let MODE='switch';
+let MODE='switch';let INLAG=0;
 const DIFFS={santai:{p:90,g:170,soft:true,hold:1.4,mh:.5,mul:.8},normal:{p:70,g:140,soft:true,hold:1,mh:1,mul:1},pro:{p:50,g:100,soft:false,hold:.7,mh:1,mul:1.25}};
 let DIFF=(()=>{try{return localStorage.getItem('lcob-diff')||'normal'}catch(e){return 'normal'}})();if(!DIFFS[DIFF])DIFF='normal';
 const MAXSEC={calm:10,build:5,big:6,drop:4},MAXSEC_B={calm:14,build:8,big:10,drop:6};
@@ -804,7 +804,7 @@ function flashRed(){const f=$('flash');f.style.transition='none';f.style.opacity
 function take(){
  const tb=$('take');tb.classList.add('press');setTimeout(()=>tb.classList.remove('press'),90);
  if(S.state!=='live')return;
- const b=songBeat();if(b<-.5)return;
+ const b=songBeat()-INLAG/1000/SPB;INLAG=0;if(b<-.5)return;
  if(S.pvw===S.pgm){pop(L('SUDAH DI PROGRAM','ALREADY ON AIR'),'mut',L('pilih kamera lain dulu','pick another camera first'));return}
  const nb=Math.round(b),dms=(b-nb)*SPB*1000,ad=Math.abs(dms);
  const sec=sectionAt(b),held=b-S.lastCut;
@@ -823,7 +823,7 @@ function take(){
 }
 function lightPress(look){
  const pd=document.querySelector(`.pad[data-look="${look}"]`);if(pd){pd.classList.add('press');setTimeout(()=>pd.classList.remove('press'),90)}
- if(S.state!=='live')return;const b=songBeat();if(b<-.5)return;
+ if(S.state!=='live')return;const b=songBeat()-INLAG/1000/SPB;INLAG=0;if(b<-.5)return;
  if(look===S.look){pop(L('SUDAH NYALA','ALREADY ON'),'mut',look);return}
  const nb=Math.round(b),dms=(b-nb)*SPB*1000,ad=Math.abs(dms),sec=sectionAt(b);
  S.look=look;S.hold=0;S.warned=false;S.cuts++;S.lastCut=b;trackCut(MODE==='light'?S.look:S.pgm,b);
@@ -925,9 +925,9 @@ function renderSongs(){
  const cs=SONGS[selected];$('songSel').innerHTML=`<span class="g">${cs.genre} · ${cs.bpm} BPM · ${tr(cs.diff)}</span><b>${cs.title}</b><span class="tr">${tr(cs.trains)}${best(cs.id)?` · ${L('Rekor','Best')} ${best(cs.id)}`:''}</span>`;
 }
 $('start').onclick=start;$('again').onclick=start;$('change').onclick=showMenu;
-$('take').addEventListener('pointerdown',e=>{e.preventDefault();take()});
+$('take').addEventListener('pointerdown',e=>{e.preventDefault();INLAG=Math.max(0,Math.min(120,performance.now()-e.timeStamp));take()});
 addEventListener('keydown',e=>{
- if(e.repeat)return;const k=e.key;
+ if(e.repeat)return;const k=e.key;INLAG=Math.max(0,Math.min(120,performance.now()-e.timeStamp));
  if(e.target&&e.target.tagName==='INPUT'&&e.target.type!=='checkbox')return;
  if(!$('quitModal').classList.contains('hide')){e.preventDefault();if(k==='Escape')resumeGame();return}
  if(k==='Escape'&&S.state==='live'){e.preventDefault();openQuit();return}
@@ -938,8 +938,11 @@ addEventListener('keydown',e=>{
 });
 
 // ================= DRAWING =================
-function beam(c,x,y,ang,len,w,col,a){c.save();c.translate(x,y);c.rotate(ang);const g=c.createLinearGradient(0,0,0,len);g.addColorStop(0,hexA(col,Math.min(1,a)));g.addColorStop(1,hexA(col,0));c.fillStyle=g;c.beginPath();c.moveTo(-2,0);c.lineTo(2,0);c.lineTo(w,len);c.lineTo(-w,len);c.closePath();c.fill();c.restore()}
-function glow(c,x,y,r,col,a){const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,hexA(col,a));g.addColorStop(1,hexA(col,0));c.fillStyle=g;c.fillRect(x-r,y-r,r*2,r*2)}
+const SPR=new Map();
+function beamSpr(col){const k='b'+col;let s=SPR.get(k);if(s)return s;s=document.createElement('canvas');s.width=64;s.height=256;const x=s.getContext('2d');const g=x.createLinearGradient(0,0,0,256);g.addColorStop(0,hexA(col,1));g.addColorStop(1,hexA(col,0));x.fillStyle=g;x.beginPath();x.moveTo(31,0);x.lineTo(33,0);x.lineTo(64,256);x.lineTo(0,256);x.closePath();x.fill();SPR.set(k,s);return s}
+function glowSpr(col){const k='g'+col;let s=SPR.get(k);if(s)return s;s=document.createElement('canvas');s.width=s.height=64;const x=s.getContext('2d');const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,hexA(col,1));g.addColorStop(1,hexA(col,0));x.fillStyle=g;x.fillRect(0,0,64,64);SPR.set(k,s);return s}
+function beam(c,x,y,ang,len,w,col,a){if(a<=0.003||len<=0)return;const ga=c.globalAlpha;c.save();c.translate(x,y);c.rotate(ang);c.globalAlpha=ga*Math.min(1,a);c.drawImage(beamSpr(col),-w,0,w*2,len);c.restore()}
+function glow(c,x,y,r,col,a){if(a<=0.003||r<=0)return;const ga=c.globalAlpha;c.globalAlpha=ga*Math.min(1,a);c.drawImage(glowSpr(col),x-r,y-r,r*2,r*2);c.globalAlpha=ga}
 function beams(c,W,H,t,o,n,y0,spread,len){if(o.EB===0)return;const EB=o.EB??o.E;c.save();c.globalCompositeOperation='lighter';const sp=o.style==='ballad'?.25:o.style==='koplo'?.8:1;
  for(let i=0;i<n;i++){const x=W*(.08+.84*i/(n-1));let ang=Math.sin(t*(.5+o.big*.5)*sp*(o.look==='BEAMS'?1.8:1)+i*1.3)*spread+(o.drop?Math.sin(t*5+i*2)*.18:0);if(o.style==='koplo'&&o.big)ang+=(Math.floor(o.b)%2?.12:-.12);
   const col=i%2?o.c1:o.c2;const a=(.06+.34*o.pulse*(o.big?1:.55)*(o.style==='ballad'&&o.look==='AUTO'?.4:1))*EB+.04;beam(c,x,y0,ang,len,len*.15,col,a);glow(c,x,y0,H*.06,col,Math.min(1,a*2.5))}
@@ -1045,21 +1048,22 @@ function drawScene(c,cam,W,H,t,b){
 const look=MODE==='light'?S.look:'AUTO';let EW=E,EB=E,EL=E;
  if(look==='WASH'){EW=E*1.5;EB=E*.12;EL=E*.9}else if(look==='BEAMS'){EW=E*.35;EB=E*1.7;EL=E*.4}else if(look==='STROBE'){EW=E*.15;EB=E*.25;EL=E*.15}else if(look==='SPOT'){EW=E*.12;EB=0;EL=0}else if(look==='BLACKOUT'){EW=.02;EB=0;EL=0}
  const o={look,EB,EL,b,sec,ph,pulse,E:EW,style:SONG.style,big:['big','drop'].includes(kindOf(sec)),drop:kindOf(sec)==='drop',cam3:SONG.cam3||(SONG.style==='koplo'?'kendang':'guitar'),c1:sec.col[0],c2:sec.col[1]};
- c.save();c.fillStyle='#040406';c.fillRect(0,0,W,H);
  const repo=S.state!=='menu'&&isRepo(cam,b);
  let dx=Math.sin(t*.7+cam)*W*.005,dy=Math.cos(t*.9+cam*2)*H*.006;
  if(repo){dx+=Math.sin(t*2.6+cam)*W*.14;dy+=Math.sin(t*1.7)*H*.06}
- c.translate(dx,dy);if(repo)c.filter=`blur(${Math.max(2,W/90)}px)`;
-SCENES[cam](c,W,H,t,b,o);
- c.restore();c.filter='none';
+ if(repo){const sw=Math.max(32,Math.round(W/7)),sh=Math.max(18,Math.round(H/7));let sm=SPR.get('rp'+cam);if(!sm){sm=document.createElement('canvas');SPR.set('rp'+cam,sm)}if(sm.width!==sw||sm.height!==sh){sm.width=sw;sm.height=sh}
+  const x=sm.getContext('2d');x.save();x.fillStyle='#040406';x.fillRect(0,0,sw,sh);x.translate(dx*sw/W,dy*sh/H);SCENES[cam](x,sw,sh,t,b,o);x.restore();
+  c.save();c.imageSmoothingEnabled=true;c.imageSmoothingQuality='low';c.drawImage(sm,0,0,W,H);c.restore()}
+ else{c.save();c.fillStyle='#040406';c.fillRect(0,0,W,H);c.translate(dx,dy);SCENES[cam](c,W,H,t,b,o);c.restore()}
  if(look==='STROBE'){const f=((b*4)%1+1)%1;if(f<.3){c.save();c.globalCompositeOperation='lighter';c.fillStyle=`rgba(255,255,255,${.55*(1-f/.3)})`;c.fillRect(0,0,W,H);c.restore()}}
  if(look==='SPOT'){const solo=inW(FX.solo,b);const tg={1:solo&&SONG.style!=='edm'&&SONG.style!=='ballad'?[W*.3,H*.72,H*.17]:solo?[W*.3,H*.72,H*.17]:[W*.5,H*.73,H*.16],2:[W*.5,H*.9,H*.45],3:[W*.53,H*1.1,H*.5]}[cam];
   if(tg){c.save();c.globalCompositeOperation='lighter';beam(c,tg[0],-H*.1,0,tg[1]+H*.1,tg[2],'#fff3d6',.3);glow(c,tg[0],tg[1]-tg[2]*.6,tg[2]*1.3,'#fff3d6',.22);c.restore()}}
  if(look==='BLACKOUT'){c.fillStyle='rgba(0,0,0,.85)';c.fillRect(0,0,W,H)}
- const vg=c.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,W*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.7)');c.fillStyle=vg;c.fillRect(0,0,W,H);
+ const vk='v'+W+'x'+H;let vs=SPR.get(vk);if(!vs){vs=document.createElement('canvas');vs.width=W;vs.height=H;const x=vs.getContext('2d');const vg=x.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,W*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.7)');x.fillStyle=vg;x.fillRect(0,0,W,H);SPR.set(vk,vs)}c.drawImage(vs,0,0);
 }
 const ctxCache=new Map();
-function drawTo(cv,cam,t,b){const dpr=Math.min(devicePixelRatio||1,2);const w=Math.round(cv.clientWidth*dpr),h=Math.round(cv.clientHeight*dpr);if(!w||!h)return;
+let QS=1,FT=16;
+function drawTo(cv,cam,t,b,big){const dpr=Math.min(devicePixelRatio||1,big?1.5:1)*QS;const w=Math.round(cv.clientWidth*dpr),h=Math.round(cv.clientHeight*dpr);if(!w||!h)return;
  if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}
  let c=ctxCache.get(cv);if(!c){c=cv.getContext('2d');ctxCache.set(cv,c)}
  drawScene(c,cam,w,h,t,b)}
@@ -1075,19 +1079,20 @@ function hud(b){
  beatEls.forEach((el,i)=>{el.classList.toggle('on',i===bi&&fr<.3);el.classList.toggle('one',i===0)});
  const nx=SECTIONS[si+1];$('next').textContent=b<0?'':nx?L(`${nx.name} dalam ${Math.max(0,Math.ceil(nx.from*4-b))} ketuk`,`${tr(nx.name)} in ${Math.max(0,Math.ceil(nx.from*4-b))} beats`):L('menuju akhir','almost done');
 }
+let FR=0,LASTF=0;
 function frame(){
- requestAnimationFrame(frame);placeYT();mapFrame();
+ requestAnimationFrame(frame);{const n=performance.now();if(LASTF){FT=FT*.95+(n-LASTF)*.05;if(FT>24&&QS>.6)QS=Math.max(.6,QS-.1);else if(FT<17&&QS<1)QS=Math.min(1,QS+.02)}LASTF=n}placeYT();mapFrame();
  const t=performance.now()/1000,b=visBeat();
  if(S.state==='live'){while(S.lastBeat<Math.floor(b)){S.lastBeat++;onBeat(S.lastBeat)}checkMoments(b);hud(b);if(b>=BEATS+1.5)endGame()}
  if(MODE==='light'){$('pgmPre').textContent='STAGE';$('pgmName').textContent=`LOOK: ${S.look}`;$('pvwPre').textContent='CROWD CAM';$('pvwName').textContent=L('reaksi penonton','crowd reaction');
   document.querySelectorAll('.pad').forEach(p=>p.classList.toggle('on',p.dataset.look===S.look));
-  drawTo($('cPgm'),1,t,b);drawTo($('cPvw'),4,t,b);return}
+  drawTo($('cPgm'),1,t,b,true);drawTo($('cPvw'),4,t,b);return}
  $('pgmPre').textContent='PROGRAM';$('pvwPre').textContent='PREVIEW';
  $('pgmName').textContent=`CAM ${S.pgm} ${tr(CAMS[S.pgm])}`;$('pvwName').textContent=`CAM ${S.pvw} ${tr(CAMS[S.pvw])}`;
  const live=S.state==='live';
  camDivs.forEach((d,i)=>{const n=i+1;d.classList.toggle('is-pgm',S.pgm===n);d.classList.toggle('is-pvw',S.pvw===n);d.classList.toggle('repo',live&&isRepo(n,b))});
  $('mPvw').classList.toggle('repo',live&&isRepo(S.pvw,b));
- drawTo($('cPgm'),S.pgm,t,b);drawTo($('cPvw'),S.pvw,t,b);camCanvases.forEach((cv,i)=>drawTo(cv,i+1,t,b));
+ drawTo($('cPgm'),S.pgm,t,b,true);drawTo($('cPvw'),S.pvw,t,b);FR=(FR+1)%2;camCanvases.forEach((cv,i)=>{if(i%2===FR)drawTo(cv,i+1,t,b)});
 }
 // ===== KALIBRASI =====
 const CAL={on:false,clicks:[],taps:[],t0:0,spb:.6,n:20,res:null,raf:0};
